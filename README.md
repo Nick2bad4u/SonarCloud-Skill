@@ -1,5 +1,7 @@
 # SonarCloud Skill
 
+[![latest GitHub release.](https://flat.badgen.net/github/release/Nick2bad4u/SonarCloud-Skill?color=cyan)](https://github.com/Nick2bad4u/SonarCloud-Skill/releases) [![GitHub stars.](https://flat.badgen.net/github/stars/Nick2bad4u/SonarCloud-Skill?color=yellow)](https://github.com/Nick2bad4u/SonarCloud-Skill/stargazers) [![GitHub forks.](https://flat.badgen.net/github/forks/Nick2bad4u/SonarCloud-Skill?color=green)](https://github.com/Nick2bad4u/SonarCloud-Skill/forks) [![GitHub open issues.](https://flat.badgen.net/github/open-issues/Nick2bad4u/SonarCloud-Skill?color=red)](https://github.com/Nick2bad4u/SonarCloud-Skill/issues) [![GitHub PRs.](https://flat.badgen.net/github/open-prs/Nick2bad4u/SonarCloud-Skill?color=orange)](https://github.com/Nick2bad4u/SonarCloud-Skill/pulls?q=sort%3Aupdated-desc+is%3Apr+is%3Aopen) [![GitHub license](https://flat.badgen.net/github/license/Nick2bad4u/SonarCloud-Skill?color=purple)]((https://github.com/Nick2bad4u/SonarCloud-Skill/blob/main/LICENSE)) [![GitHub Dependabot](https://flat.badgen.net/github/dependabot/Nick2bad4u/SonarCloud-Skill?color=blue)]((https://github.com/Nick2bad4u/SonarCloud-Skill/network/updates)) 
+
 A Copilot / AI skill for inspecting and managing **SonarCloud** and **SonarQube** findings.
 
 This repository provides:
