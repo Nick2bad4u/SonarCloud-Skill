@@ -206,6 +206,7 @@ python "<path-to-skill>/scripts/manage_sonar_findings.py" api-call --base-url ht
    - Prefer `--dry-run` first for bulk or risky changes.
    - Add a short, actionable comment describing why the transition is valid.
    - Remember that quality gate/profile changes, settings changes, and tag changes generally require stronger project permissions than read-only inspection.
+   - If needed, make changed to `sonar-project.properties` or source code to fix root causes, exclude false positives, or adjust the analysis surface.
 6. Verify the post-change state.
    - Re-run `summary` or the relevant list/detail command.
    - If you changed `sonar-project.properties` or source code, wait for or trigger a fresh Sonar analysis so stale findings can disappear naturally.
