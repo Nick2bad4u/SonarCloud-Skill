@@ -155,12 +155,6 @@ gh workflow run "Release Skill Bundle" -f release_type=patch -f ref=main
 gh workflow run "Release Skill Bundle" -f release_type=patch -f version=0.2.0 -f ref=main
 ```
 
-### Create labels (with colors/descriptions)
-
-```powershell
-pwsh ./.github/scripts/bootstrap-labels.ps1 -Repo "Nick2bad4u/SonarCloud-Skill"
-```
-
 ---
 
 ## License
