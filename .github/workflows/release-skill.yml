@@ -36,6 +36,9 @@ concurrency:
   group: "release-skill-${{ github.ref || github.event.inputs.version || github.event.inputs.release_type }}"
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   release:
     name: Package and publish skill bundle

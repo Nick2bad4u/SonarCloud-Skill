@@ -16,6 +16,9 @@ on:
         types:
             - checks_requested
 
+permissions:
+  contents: read
+
 jobs:
     inference:
         name: Summarize Issue Or Pull Request
