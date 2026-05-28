@@ -1,0 +1,47 @@
+{
+  "name": "@nick2bad4u/sonar-manage-findings",
+  "version": "1.0.0",
+  "description": "Codex skill for inspecting and triaging SonarCloud and SonarQube findings.",
+  "license": "Unlicense",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nick2bad4u/SonarCloud-Skill.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Nick2bad4u/SonarCloud-Skill/issues"
+  },
+  "homepage": "https://github.com/Nick2bad4u/SonarCloud-Skill#readme",
+  "keywords": [
+    "agent-skill",
+    "codex",
+    "openai",
+    "sonarcloud",
+    "sonarqube",
+    "static-analysis"
+  ],
+  "files": [
+    ".github/instructions/copilot-instructions.md",
+    ".github/skills/sonar-manage-findings/",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "README.md",
+    "SECURITY.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22.14"
+  },
+  "scripts": {
+    "validate": "node scripts/validate-skill-package.mjs",
+    "pack:dry-run": "npm pack --dry-run",
+    "release:verify": "npm run validate && npm run pack:dry-run"
+  },
+  "codexSkill": {
+    "name": "sonar-manage-findings",
+    "path": ".github/skills/sonar-manage-findings",
+    "githubReleaseAssetPrefix": "sonarcloud-skill"
+  }
+}
