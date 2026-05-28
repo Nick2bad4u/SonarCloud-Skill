@@ -1,7 +1,7 @@
 {
   "name": "@nick2bad4u/sonar-manage-findings",
   "version": "1.0.0",
-  "private": true,
+  "private": false,
   "description": "Codex skill for inspecting and triaging SonarCloud and SonarQube findings.",
   "license": "Unlicense",
   "type": "module",
