@@ -55,13 +55,13 @@ CHANGELOG.md
 
 ## Publishing
 
-The skill is packaged for GitHub releases and npm as `@nick2bad4u/sonar-manage-findings`.
+The skill is packaged for GitHub releases and npm as `sonar-manage-findings-skill`.
 
 For the first npm publish, publish locally once so the package exists:
 
 ```powershell
 npm run release:verify
-npm publish --access public
+npm publish
 ```
 
 Then configure npm trusted publishing for staged publishing:
@@ -74,7 +74,7 @@ Then configure npm trusted publishing for staged publishing:
 CLI equivalent:
 
 ```powershell
-npm trust github "@nick2bad4u/sonar-manage-findings" --repo "Nick2bad4u/SonarCloud-Skill" --file "release-skill.yml" --allow-stage-publish
+npm trust github "sonar-manage-findings-skill" --repo "Nick2bad4u/SonarCloud-Skill" --file "release-skill.yml" --allow-stage-publish
 ```
 
 After that, create releases from GitHub Actions by pushing a `vX.Y.Z` tag or running the `Release Skill Bundle` workflow manually with an explicit version. The workflow uses npm OIDC trusted publishing to stage the package and does not require an npm automation token.
@@ -82,7 +82,7 @@ After that, create releases from GitHub Actions by pushing a `vX.Y.Z` tag or run
 Approve the staged package after reviewing it:
 
 ```powershell
-npm stage list "@nick2bad4u/sonar-manage-findings"
+npm stage list "sonar-manage-findings-skill"
 npm stage approve "<stage-id>"
 ```
 
