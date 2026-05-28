@@ -22,8 +22,11 @@
     "static-analysis"
   ],
   "files": [
-    ".github/instructions/copilot-instructions.md",
-    ".github/skills/sonar-manage-findings/",
+    "SKILL.md",
+    "LICENSE.txt",
+    "agents/",
+    "assets/",
+    "scripts/",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "README.md",
@@ -36,16 +39,15 @@
     "node": ">=22.14"
   },
   "scripts": {
-    "build:npm-package": "node scripts/build-npm-package.mjs",
-    "validate": "node scripts/validate-skill-package.mjs",
-    "pack:dry-run": "npm run build:npm-package && npm pack --dry-run ./dist/npm",
-    "publish:local": "npm run release:verify && npm publish ./dist/npm --access public",
+    "validate": "node tools/validate-skill-package.mjs",
+    "pack:dry-run": "npm pack --dry-run",
+    "publish:local": "npm run release:verify && npm publish --access public",
     "release:verify": "npm run validate && npm run pack:dry-run",
-    "stage:local": "npm run release:verify && npm stage publish ./dist/npm"
+    "stage:local": "npm run release:verify && npm stage publish"
   },
   "codexSkill": {
     "name": "sonar-manage-findings",
-    "path": ".github/skills/sonar-manage-findings",
+    "path": ".",
     "githubReleaseAssetPrefix": "sonarcloud-skill"
   }
 }

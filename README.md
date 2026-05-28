@@ -6,7 +6,7 @@ A Copilot / AI skill for inspecting and managing **SonarCloud** and **SonarQube*
 
 This repository provides:
 
-- a reusable `sonar-manage-findings` skill (`.github/skills/sonar-manage-findings/SKILL.md`)
+- a reusable `sonar-manage-findings` skill (`SKILL.md`)
 - a Python CLI helper to query and triage project findings
 - GitHub automation for security/scanning hygiene
 
@@ -31,18 +31,20 @@ With a Sonar token in an environment variable, you can:
 ## Repository layout
 
 ```text
-.github/
-	skills/
-		sonar-manage-findings/
-			SKILL.md
-			scripts/
-				manage_sonar_findings.py
-				sonar_manage_api.py
-				sonar_manage_common.py
-				sonar_manage_diagnostics.py
-				sonar_manage_issues.py
-				sonar_manage_project.py
-				sonar_manage_render.py
+SKILL.md
+agents/
+  openai.yaml
+assets/
+  sonar-manage-findings-small.svg
+  sonar-manage-findings.png
+scripts/
+  manage_sonar_findings.py
+  sonar_manage_api.py
+  sonar_manage_common.py
+  sonar_manage_diagnostics.py
+  sonar_manage_issues.py
+  sonar_manage_project.py
+  sonar_manage_render.py
 README.md
 CONTRIBUTING.md
 SECURITY.md
@@ -59,7 +61,7 @@ For the first npm publish, publish locally once so the package exists:
 
 ```powershell
 npm run release:verify
-npm publish .\dist\npm --access public
+npm publish --access public
 ```
 
 Then configure npm trusted publishing for staged publishing:
@@ -112,13 +114,13 @@ export SONAR_TOKEN="<your-token>"
 From repository root:
 
 ```powershell
-python ".github/skills/sonar-manage-findings/scripts/manage_sonar_findings.py" summary --repo "."
+python "scripts/manage_sonar_findings.py" summary --repo "."
 ```
 
 Machine-readable output:
 
 ```powershell
-python ".github/skills/sonar-manage-findings/scripts/manage_sonar_findings.py" summary --repo "." --json
+python "scripts/manage_sonar_findings.py" summary --repo "." --json
 ```
 
 ---
@@ -127,24 +129,24 @@ python ".github/skills/sonar-manage-findings/scripts/manage_sonar_findings.py" s
 
 ```powershell
 # List open/reopened issues
-python ".github/skills/sonar-manage-findings/scripts/manage_sonar_findings.py" list-issues --repo "." --issue-statuses OPEN,CONFIRMED,REOPENED
+python "scripts/manage_sonar_findings.py" list-issues --repo "." --issue-statuses OPEN,CONFIRMED,REOPENED
 
 # Show issue activity
-python ".github/skills/sonar-manage-findings/scripts/manage_sonar_findings.py" issue-changelog --repo "." --issue AZ123
+python "scripts/manage_sonar_findings.py" issue-changelog --repo "." --issue AZ123
 
 # Resolve an issue (dry-run first)
-python ".github/skills/sonar-manage-findings/scripts/manage_sonar_findings.py" transition-issue --repo "." --issue AZ123 --transition resolve --comment "Fixed in code." --dry-run
+python "scripts/manage_sonar_findings.py" transition-issue --repo "." --issue AZ123 --transition resolve --comment "Fixed in code." --dry-run
 
 # List hotspots awaiting review
-python ".github/skills/sonar-manage-findings/scripts/manage_sonar_findings.py" list-hotspots --repo "." --hotspot-status TO_REVIEW --include-details
+python "scripts/manage_sonar_findings.py" list-hotspots --repo "." --hotspot-status TO_REVIEW --include-details
 
 # Check quality gate
-python ".github/skills/sonar-manage-findings/scripts/manage_sonar_findings.py" quality-gate-status --repo "."
+python "scripts/manage_sonar_findings.py" quality-gate-status --repo "."
 ```
 
 For the full command surface and workflows, see:
 
-- `.github/skills/sonar-manage-findings/SKILL.md`
+- `SKILL.md`
 
 ---
 
