@@ -1,11 +1,9 @@
 ---
 name: "sonar-manage-findings"
 description: "Use when a user asks to inspect, triage, close, resolve, false-positive, wontfix, review, measure, or configure SonarCloud or SonarQube project findings and settings across repositories; securely reads the token from environment variables and can auto-read project settings from sonar-project.properties"
-argument-hint: "`repo` (optional, default `.`), optional `project_key`, optional `organization`, optional `token_env`, plus a command such as summary, list-issues, issue-changelog, list-hotspots, measures, quality-gate-status, settings-values, search-project-tags, or api-call"
-compatibility: "Requires Python 3 and a Sonar token supplied through an environment variable such as `SONAR_TOKEN`. Supports project-level SonarCloud and SonarQube API workflows, with a raw API fallback for anything not wrapped yet."
-disable-model-invocation: false
-user-invocable: true
 license: "Unlicense"
+metadata:
+  short-description: "Inspect and triage Sonar findings"
 ---
 
 # Sonar Findings Management
@@ -39,6 +37,17 @@ The bundled helper is repository-agnostic:
 - or pass `--project-key` and `--base-url` explicitly
 - authenticate via environment variable instead of putting a token on the command line
 - use `--auth-scheme auto` by default to try Bearer first and fall back to Basic for older endpoints
+
+## Compatibility
+
+Requires Python 3 and a Sonar token supplied through an environment variable such as `SONAR_TOKEN`.
+Supports project-level SonarCloud and SonarQube API workflows, with a raw API fallback for anything not wrapped yet.
+
+## Invocation hints
+
+Use `repo` when the target is a local checkout, defaulting to `.`.
+Use optional `project_key`, `organization`, and `token_env` values when auto-detection is not enough.
+Common commands include `summary`, `list-issues`, `issue-changelog`, `list-hotspots`, `measures`, `quality-gate-status`, `settings-values`, `search-project-tags`, and `api-call`.
 
 ## Security model
 
