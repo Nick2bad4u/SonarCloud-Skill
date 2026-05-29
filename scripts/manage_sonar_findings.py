@@ -63,6 +63,12 @@ from sonar_manage_project import (
 )
 from sonar_manage_render import emit_output
 
+HELP_COMPONENT_KEY_OVERRIDE = "Optional component key override. Defaults to the project key."
+HELP_DRY_RUN = "Print the intended mutation without sending it."
+HELP_ISSUE_KEY = "Issue key."
+HELP_PROJECT_KEY_OVERRIDE = "Optional project key override."
+HELP_QUALITY_PROFILE_KEY = "Quality profile key."
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -160,25 +166,25 @@ def parse_args() -> argparse.Namespace:
         "issue-changelog",
         help="Fetch the changelog/activity for one issue.",
     )
-    issue_changelog_parser.add_argument("--issue", required=True, help="Issue key.")
+    issue_changelog_parser.add_argument("--issue", required=True, help=HELP_ISSUE_KEY)
 
     issue_comment_parser = subparsers.add_parser(
         "comment-issue",
         help="Add a comment to one issue.",
     )
-    issue_comment_parser.add_argument("--issue", required=True, help="Issue key.")
+    issue_comment_parser.add_argument("--issue", required=True, help=HELP_ISSUE_KEY)
     issue_comment_parser.add_argument("--text", required=True, help="Comment text.")
     issue_comment_parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the intended mutation without sending it.",
+        help=HELP_DRY_RUN,
     )
 
     issue_assign_parser = subparsers.add_parser(
         "assign-issue",
         help="Assign or unassign one issue.",
     )
-    issue_assign_parser.add_argument("--issue", required=True, help="Issue key.")
+    issue_assign_parser.add_argument("--issue", required=True, help=HELP_ISSUE_KEY)
     issue_assign_parser.add_argument(
         "--assignee",
         required=True,
@@ -187,14 +193,14 @@ def parse_args() -> argparse.Namespace:
     issue_assign_parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the intended mutation without sending it.",
+        help=HELP_DRY_RUN,
     )
 
     issue_tags_parser = subparsers.add_parser(
         "set-issue-tags",
         help="Replace the tags on one issue.",
     )
-    issue_tags_parser.add_argument("--issue", required=True, help="Issue key.")
+    issue_tags_parser.add_argument("--issue", required=True, help=HELP_ISSUE_KEY)
     issue_tags_parser.add_argument(
         "--tag",
         action="append",
@@ -210,7 +216,7 @@ def parse_args() -> argparse.Namespace:
     issue_tags_parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the intended mutation without sending it.",
+        help=HELP_DRY_RUN,
     )
 
     transition_issue_parser = subparsers.add_parser(
@@ -237,7 +243,7 @@ def parse_args() -> argparse.Namespace:
     transition_issue_parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the intended mutation without sending it.",
+        help=HELP_DRY_RUN,
     )
 
     list_hotspots_parser = subparsers.add_parser(
@@ -296,7 +302,7 @@ def parse_args() -> argparse.Namespace:
     review_hotspot_parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the intended mutation without sending it.",
+        help=HELP_DRY_RUN,
     )
 
     measures_parser = subparsers.add_parser(
@@ -380,7 +386,7 @@ def parse_args() -> argparse.Namespace:
     project_analyses_parser.add_argument(
         "--project",
         default=None,
-        help="Optional project key override.",
+        help=HELP_PROJECT_KEY_OVERRIDE,
     )
     project_analyses_parser.add_argument(
         "--page",
@@ -407,7 +413,7 @@ def parse_args() -> argparse.Namespace:
     quality_gate_status_parser.add_argument(
         "--project",
         default=None,
-        help="Optional project key override.",
+        help=HELP_PROJECT_KEY_OVERRIDE,
     )
 
     subparsers.add_parser(
@@ -422,7 +428,7 @@ def parse_args() -> argparse.Namespace:
     get_quality_gate_parser.add_argument(
         "--project",
         default=None,
-        help="Optional project key override.",
+        help=HELP_PROJECT_KEY_OVERRIDE,
     )
 
     set_quality_gate_parser = subparsers.add_parser(
@@ -443,12 +449,12 @@ def parse_args() -> argparse.Namespace:
     set_quality_gate_parser.add_argument(
         "--project",
         default=None,
-        help="Optional project key override.",
+        help=HELP_PROJECT_KEY_OVERRIDE,
     )
     set_quality_gate_parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the intended mutation without sending it.",
+        help=HELP_DRY_RUN,
     )
 
     unset_quality_gate_parser = subparsers.add_parser(
@@ -458,12 +464,12 @@ def parse_args() -> argparse.Namespace:
     unset_quality_gate_parser.add_argument(
         "--project",
         default=None,
-        help="Optional project key override.",
+        help=HELP_PROJECT_KEY_OVERRIDE,
     )
     unset_quality_gate_parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the intended mutation without sending it.",
+        help=HELP_DRY_RUN,
     )
 
     list_quality_profiles_parser = subparsers.add_parser(
@@ -473,7 +479,7 @@ def parse_args() -> argparse.Namespace:
     list_quality_profiles_parser.add_argument(
         "--project",
         default=None,
-        help="Optional project key override.",
+        help=HELP_PROJECT_KEY_OVERRIDE,
     )
     list_quality_profiles_parser.add_argument(
         "--language",
@@ -493,7 +499,7 @@ def parse_args() -> argparse.Namespace:
     quality_profile_changelog_parser.add_argument(
         "--quality-profile",
         required=True,
-        help="Quality profile key.",
+        help=HELP_QUALITY_PROFILE_KEY,
     )
 
     set_quality_profile_parser = subparsers.add_parser(
@@ -503,17 +509,17 @@ def parse_args() -> argparse.Namespace:
     set_quality_profile_parser.add_argument(
         "--quality-profile",
         required=True,
-        help="Quality profile key.",
+        help=HELP_QUALITY_PROFILE_KEY,
     )
     set_quality_profile_parser.add_argument(
         "--project",
         default=None,
-        help="Optional project key override.",
+        help=HELP_PROJECT_KEY_OVERRIDE,
     )
     set_quality_profile_parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the intended mutation without sending it.",
+        help=HELP_DRY_RUN,
     )
 
     unset_quality_profile_parser = subparsers.add_parser(
@@ -523,17 +529,17 @@ def parse_args() -> argparse.Namespace:
     unset_quality_profile_parser.add_argument(
         "--quality-profile",
         required=True,
-        help="Quality profile key.",
+        help=HELP_QUALITY_PROFILE_KEY,
     )
     unset_quality_profile_parser.add_argument(
         "--project",
         default=None,
-        help="Optional project key override.",
+        help=HELP_PROJECT_KEY_OVERRIDE,
     )
     unset_quality_profile_parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the intended mutation without sending it.",
+        help=HELP_DRY_RUN,
     )
 
     settings_values_parser = subparsers.add_parser(
@@ -550,7 +556,7 @@ def parse_args() -> argparse.Namespace:
     settings_values_parser.add_argument(
         "--component",
         default=None,
-        help="Optional component key override. Defaults to the project key.",
+        help=HELP_COMPONENT_KEY_OVERRIDE,
     )
 
     settings_definitions_parser = subparsers.add_parser(
@@ -567,7 +573,7 @@ def parse_args() -> argparse.Namespace:
     settings_definitions_parser.add_argument(
         "--component",
         default=None,
-        help="Optional component key override. Defaults to the project key.",
+        help=HELP_COMPONENT_KEY_OVERRIDE,
     )
 
     settings_set_parser = subparsers.add_parser(
@@ -592,12 +598,12 @@ def parse_args() -> argparse.Namespace:
     settings_set_parser.add_argument(
         "--component",
         default=None,
-        help="Optional component key override. Defaults to the project key.",
+        help=HELP_COMPONENT_KEY_OVERRIDE,
     )
     settings_set_parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the intended mutation without sending it.",
+        help=HELP_DRY_RUN,
     )
 
     settings_reset_parser = subparsers.add_parser(
@@ -608,12 +614,12 @@ def parse_args() -> argparse.Namespace:
     settings_reset_parser.add_argument(
         "--component",
         default=None,
-        help="Optional component key override. Defaults to the project key.",
+        help=HELP_COMPONENT_KEY_OVERRIDE,
     )
     settings_reset_parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the intended mutation without sending it.",
+        help=HELP_DRY_RUN,
     )
 
     search_project_tags_parser = subparsers.add_parser(
@@ -639,7 +645,7 @@ def parse_args() -> argparse.Namespace:
     set_project_tags_parser.add_argument(
         "--project",
         default=None,
-        help="Optional project key override.",
+        help=HELP_PROJECT_KEY_OVERRIDE,
     )
     set_project_tags_parser.add_argument(
         "--tag",
@@ -656,7 +662,7 @@ def parse_args() -> argparse.Namespace:
     set_project_tags_parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the intended mutation without sending it.",
+        help=HELP_DRY_RUN,
     )
 
     api_call_parser = subparsers.add_parser(
@@ -801,248 +807,218 @@ def main() -> int:
 
 
 def dispatch_command(args: argparse.Namespace, context: ProjectContext) -> Any:
-    if args.command == "summary":
-        return build_summary(args, context)
-
-    if args.command == "list-issues":
-        return fetch_issues(
-            context=context,
-            issue_statuses=args.issue_statuses,
-            page=args.page,
-            page_size=args.page_size,
-            extra_query=parse_name_value_pairs(
-                args.extra_query, argument_name="extra-query"
-            ),
-        )
-
-    if args.command == "issue-changelog":
-        return fetch_issue_changelog(context=context, issue_key=args.issue)
-
-    if args.command == "comment-issue":
-        return add_issue_comment(
+    handlers = {
+        "summary": lambda: build_summary(args, context),
+        "list-issues": lambda: command_list_issues(args, context),
+        "issue-changelog": lambda: fetch_issue_changelog(
+            context=context, issue_key=args.issue
+        ),
+        "comment-issue": lambda: add_issue_comment(
             context=context,
             issue_key=args.issue,
             text=args.text,
             dry_run=args.dry_run,
-        )
-
-    if args.command == "assign-issue":
-        return assign_issue(
+        ),
+        "assign-issue": lambda: assign_issue(
             context=context,
             issue_key=args.issue,
             assignee=args.assignee,
             dry_run=args.dry_run,
-        )
-
-    if args.command == "set-issue-tags":
-        return set_issue_tags(
+        ),
+        "set-issue-tags": lambda: set_issue_tags(
             context=context,
             issue_key=args.issue,
             tags=resolve_tag_values(args.tags, clear=args.clear, argument_name="tag"),
             dry_run=args.dry_run,
-        )
-
-    if args.command == "transition-issue":
-        return transition_issues(
+        ),
+        "transition-issue": lambda: transition_issues(
             context=context,
             issue_keys=args.issues,
             transition=args.transition,
             comment=args.comment,
             dry_run=args.dry_run,
-        )
-
-    if args.command == "list-hotspots":
-        return fetch_hotspots(
-            context=context,
-            hotspot_status=args.hotspot_status,
-            page=args.page,
-            page_size=args.page_size,
-            include_details=args.include_details,
-            extra_query=parse_name_value_pairs(
-                args.extra_query, argument_name="extra-query"
-            ),
-        )
-
-    if args.command == "show-hotspot":
-        return fetch_hotspot_detail(context=context, hotspot_key=args.hotspot)
-
-    if args.command == "review-hotspot":
-        return review_hotspots(
+        ),
+        "list-hotspots": lambda: command_list_hotspots(args, context),
+        "show-hotspot": lambda: fetch_hotspot_detail(
+            context=context, hotspot_key=args.hotspot
+        ),
+        "review-hotspot": lambda: review_hotspots(
             context=context,
             hotspot_keys=args.hotspots,
             status=args.status,
             resolution=args.resolution,
             comment=args.comment,
             dry_run=args.dry_run,
-        )
-
-    if args.command == "measures":
-        return fetch_measures(
-            context=context,
-            component=args.component or context.project_key,
-            metrics=resolve_csv_values(args.metrics, argument_name="metric")
-            or resolve_csv_values([DEFAULT_SUMMARY_METRICS], argument_name="metric"),
-        )
-
-    if args.command == "measures-history":
-        return fetch_measure_history(
+        ),
+        "measures": lambda: command_measures(args, context),
+        "measures-history": lambda: fetch_measure_history(
             context=context,
             component=args.component or context.project_key,
             metrics=resolve_csv_values(args.metrics, argument_name="metric"),
             from_date=args.from_date,
             to_date=args.to_date,
-        )
-
-    if args.command == "project-info":
-        return fetch_project_component_info(
+        ),
+        "project-info": lambda: fetch_project_component_info(
             context=context,
             component=args.component or context.project_key,
-        )
-
-    if args.command == "ce-component":
-        return fetch_ce_component(
+        ),
+        "ce-component": lambda: fetch_ce_component(
             context=context,
             component=args.component or context.project_key,
-        )
-
-    if args.command == "ce-task":
-        return fetch_ce_task(
-            context=context,
-            task_id=args.task_id,
-        )
-
-    if args.command == "project-analyses":
-        return fetch_project_analyses(
+        ),
+        "ce-task": lambda: fetch_ce_task(context=context, task_id=args.task_id),
+        "project-analyses": lambda: fetch_project_analyses(
             context=context,
             project_key=args.project or context.project_key,
             page=args.page,
             page_size=args.page_size,
-        )
-
-    if args.command == "tsconfig-warning-check":
-        return investigate_tsconfig_warning(context=context)
-
-    if args.command == "quality-gate-status":
-        return fetch_quality_gate_status(
+        ),
+        "tsconfig-warning-check": lambda: investigate_tsconfig_warning(
+            context=context
+        ),
+        "quality-gate-status": lambda: fetch_quality_gate_status(
             context=context,
             project_key=args.project or context.project_key,
-        )
-
-    if args.command == "list-quality-gates":
-        return list_quality_gates(context=context)
-
-    if args.command == "get-quality-gate":
-        return fetch_project_quality_gate(
+        ),
+        "list-quality-gates": lambda: list_quality_gates(context=context),
+        "get-quality-gate": lambda: fetch_project_quality_gate(
             context=context,
             project_key=args.project or context.project_key,
-        )
-
-    if args.command == "set-quality-gate":
-        return set_quality_gate(
+        ),
+        "set-quality-gate": lambda: set_quality_gate(
             context=context,
             project_key=args.project or context.project_key,
             gate_id=args.gate_id,
             gate_name=args.gate_name,
             dry_run=args.dry_run,
-        )
-
-    if args.command == "unset-quality-gate":
-        return unset_quality_gate(
+        ),
+        "unset-quality-gate": lambda: unset_quality_gate(
             context=context,
             project_key=args.project or context.project_key,
             dry_run=args.dry_run,
-        )
-
-    if args.command == "list-quality-profiles":
-        return list_quality_profiles(
+        ),
+        "list-quality-profiles": lambda: list_quality_profiles(
             context=context,
             project_key=args.project or context.project_key,
             language=args.language,
             quality_profile=args.quality_profile,
-        )
-
-    if args.command == "quality-profile-changelog":
-        return fetch_quality_profile_changelog(
+        ),
+        "quality-profile-changelog": lambda: fetch_quality_profile_changelog(
             context=context,
             quality_profile_key=args.quality_profile,
-        )
-
-    if args.command == "set-quality-profile":
-        return set_quality_profile(
+        ),
+        "set-quality-profile": lambda: set_quality_profile(
             context=context,
             project_key=args.project or context.project_key,
             quality_profile_key=args.quality_profile,
             dry_run=args.dry_run,
-        )
-
-    if args.command == "unset-quality-profile":
-        return unset_quality_profile(
+        ),
+        "unset-quality-profile": lambda: unset_quality_profile(
             context=context,
             project_key=args.project or context.project_key,
             quality_profile_key=args.quality_profile,
             dry_run=args.dry_run,
-        )
-
-    if args.command == "settings-values":
-        return fetch_settings_values(
-            context=context,
-            component=args.component or context.project_key,
-            keys=resolve_csv_values(args.keys, argument_name="key"),
-        )
-
-    if args.command == "settings-definitions":
-        return fetch_settings_definitions(
-            context=context,
-            component=args.component or context.project_key,
-            keys=resolve_csv_values(args.keys, argument_name="key"),
-        )
-
-    if args.command == "settings-set":
-        return set_setting_value(
+        ),
+        "settings-values": lambda: command_settings_values(args, context),
+        "settings-definitions": lambda: command_settings_definitions(args, context),
+        "settings-set": lambda: set_setting_value(
             context=context,
             component=args.component or context.project_key,
             key=args.key,
             value=args.value,
             values=args.values,
             dry_run=args.dry_run,
-        )
-
-    if args.command == "settings-reset":
-        return reset_setting_value(
+        ),
+        "settings-reset": lambda: reset_setting_value(
             context=context,
             component=args.component or context.project_key,
             key=args.key,
             dry_run=args.dry_run,
-        )
-
-    if args.command == "search-project-tags":
-        return search_project_tags(
+        ),
+        "search-project-tags": lambda: search_project_tags(
             context=context,
             query_text=args.query_text,
             page_size=args.page_size,
-        )
-
-    if args.command == "set-project-tags":
-        return set_project_tags(
+        ),
+        "set-project-tags": lambda: set_project_tags(
             context=context,
             project_key=args.project or context.project_key,
             tags=resolve_tag_values(args.tags, clear=args.clear, argument_name="tag"),
             dry_run=args.dry_run,
-        )
+        ),
+        "api-call": lambda: command_api_call(args, context),
+    }
 
-    if args.command == "api-call":
-        return direct_api_call(
-            context=context,
-            endpoint=args.endpoint,
-            method=args.method,
-            query=parse_name_value_pairs(
-                args.query_params, argument_name="query-param"
-            ),
-            form=parse_name_value_pairs(args.form_params, argument_name="form-param"),
-            dry_run=args.dry_run,
-        )
+    try:
+        return handlers[args.command]()
+    except KeyError as error:
+        raise SonarCliError(f"Unsupported command: {args.command}") from error
 
-    raise SonarCliError(f"Unsupported command: {args.command}")
+
+def command_list_issues(
+    args: argparse.Namespace, context: ProjectContext
+) -> dict[str, Any]:
+    return fetch_issues(
+        context=context,
+        issue_statuses=args.issue_statuses,
+        page=args.page,
+        page_size=args.page_size,
+        extra_query=parse_name_value_pairs(args.extra_query, argument_name="extra-query"),
+    )
+
+
+def command_list_hotspots(
+    args: argparse.Namespace, context: ProjectContext
+) -> dict[str, Any]:
+    return fetch_hotspots(
+        context=context,
+        hotspot_status=args.hotspot_status,
+        page=args.page,
+        page_size=args.page_size,
+        include_details=args.include_details,
+        extra_query=parse_name_value_pairs(args.extra_query, argument_name="extra-query"),
+    )
+
+
+def command_measures(args: argparse.Namespace, context: ProjectContext) -> dict[str, Any]:
+    metrics = resolve_csv_values(args.metrics, argument_name="metric")
+    default_metrics = resolve_csv_values([DEFAULT_SUMMARY_METRICS], argument_name="metric")
+    return fetch_measures(
+        context=context,
+        component=args.component or context.project_key,
+        metrics=metrics or default_metrics,
+    )
+
+
+def command_settings_values(
+    args: argparse.Namespace, context: ProjectContext
+) -> dict[str, Any]:
+    return fetch_settings_values(
+        context=context,
+        component=args.component or context.project_key,
+        keys=resolve_csv_values(args.keys, argument_name="key"),
+    )
+
+
+def command_settings_definitions(
+    args: argparse.Namespace, context: ProjectContext
+) -> dict[str, Any]:
+    return fetch_settings_definitions(
+        context=context,
+        component=args.component or context.project_key,
+        keys=resolve_csv_values(args.keys, argument_name="key"),
+    )
+
+
+def command_api_call(args: argparse.Namespace, context: ProjectContext) -> dict[str, Any]:
+    return direct_api_call(
+        context=context,
+        endpoint=args.endpoint,
+        method=args.method,
+        query=parse_name_value_pairs(args.query_params, argument_name="query-param"),
+        form=parse_name_value_pairs(args.form_params, argument_name="form-param"),
+        dry_run=args.dry_run,
+    )
 
 
 if __name__ == "__main__":

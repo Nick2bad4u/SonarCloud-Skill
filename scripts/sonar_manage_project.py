@@ -320,17 +320,23 @@ def resolve_quality_gate_id(
 
     normalized_name = gate_name.strip()
     for quality_gate in quality_gates:
-        if not isinstance(quality_gate, dict):
-            continue
-
-        if quality_gate.get("name") == normalized_name:
-            gate_id_value = quality_gate.get("id")
-            if isinstance(gate_id_value, int):
-                return str(gate_id_value)
-            if isinstance(gate_id_value, str) and gate_id_value:
-                return gate_id_value
+        gate_id_value = matching_quality_gate_id(quality_gate, normalized_name)
+        if gate_id_value is not None:
+            return gate_id_value
 
     raise SonarCliError(f"Could not resolve a quality gate named '{normalized_name}'.")
+
+
+def matching_quality_gate_id(candidate: Any, normalized_name: str) -> str | None:
+    if not isinstance(candidate, dict) or candidate.get("name") != normalized_name:
+        return None
+
+    gate_id_value = candidate.get("id")
+    if isinstance(gate_id_value, int):
+        return str(gate_id_value)
+    if isinstance(gate_id_value, str) and gate_id_value:
+        return gate_id_value
+    return None
 
 
 def list_quality_profiles(

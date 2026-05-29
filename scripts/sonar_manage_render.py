@@ -19,6 +19,50 @@ def emit_output(payload: Any, *, as_json: bool) -> None:
 def render_text(payload: dict[str, Any]) -> str:
     lines: list[str] = []
 
+    append_context_fields(lines, payload)
+    append_sample_section(
+        lines,
+        payload.get("openIssues"),
+        count_label="Open issues",
+        sample_label="Issue sample:",
+    )
+    append_sample_section(
+        lines,
+        payload.get("hotspots"),
+        count_label="Hotspots",
+        sample_label="Hotspot sample:",
+    )
+    append_quality_gate_status(lines, payload)
+    append_quality_gate(lines, payload)
+    append_measures(lines, payload)
+    append_list_section(lines, payload.get("results"), heading="Results:", key_field=None)
+    append_list_section(
+        lines,
+        payload.get("issues"),
+        heading_prefix="Issues returned",
+        key_field="key",
+    )
+    append_list_section(
+        lines,
+        payload.get("hotspots"),
+        heading_prefix="Hotspots returned",
+        key_field="key",
+    )
+    append_list_section(
+        lines,
+        payload.get("details"),
+        heading_prefix="Detail items returned",
+        key_field="key",
+        skip_empty=True,
+    )
+
+    if not lines:
+        return json.dumps(payload, indent=2)
+
+    return "\n".join(lines)
+
+
+def append_context_fields(lines: list[str], payload: dict[str, Any]) -> None:
     for label, key in (
         ("Project", "projectKey"),
         ("Repo", "repoRoot"),
@@ -31,107 +75,114 @@ def render_text(payload: dict[str, Any]) -> str:
         if isinstance(value, str) and value:
             lines.append(f"{label}: {value}")
 
-    open_issues = payload.get("openIssues")
-    if isinstance(open_issues, dict):
-        lines.append(f"Open issues: {open_issues.get('total', 0)}")
-        sample = open_issues.get("sample")
-        if isinstance(sample, list) and sample:
-            lines.append("Issue sample:")
-            lines.extend(format_sample_items(sample, key_field="key"))
 
-    hotspots = payload.get("hotspots")
-    if isinstance(hotspots, dict):
-        lines.append(f"Hotspots: {hotspots.get('total', 0)}")
-        sample = hotspots.get("sample")
-        if isinstance(sample, list) and sample:
-            lines.append("Hotspot sample:")
-            lines.extend(format_sample_items(sample, key_field="key"))
+def append_sample_section(
+    lines: list[str],
+    section: Any,
+    *,
+    count_label: str,
+    sample_label: str,
+) -> None:
+    if not isinstance(section, dict):
+        return
 
+    lines.append(f"{count_label}: {section.get('total', 0)}")
+    sample = section.get("sample")
+    if isinstance(sample, list) and sample:
+        lines.append(sample_label)
+        lines.extend(format_sample_items(sample, key_field="key"))
+
+
+def append_quality_gate_status(lines: list[str], payload: dict[str, Any]) -> None:
     quality_gate_status = payload.get("qualityGateStatus")
-    if isinstance(quality_gate_status, dict):
-        project_status = quality_gate_status.get("projectStatus")
-        if isinstance(project_status, dict):
-            status = project_status.get("status")
-            if isinstance(status, str):
-                lines.append(f"Quality gate status: {status}")
+    if not isinstance(quality_gate_status, dict):
+        return
 
+    project_status = quality_gate_status.get("projectStatus")
+    if isinstance(project_status, dict) and isinstance(project_status.get("status"), str):
+        lines.append(f"Quality gate status: {project_status['status']}")
+
+
+def append_quality_gate(lines: list[str], payload: dict[str, Any]) -> None:
     quality_gate = payload.get("qualityGate")
-    if isinstance(quality_gate, dict):
-        name = payload.get("name") or quality_gate.get("name")
-        if not isinstance(name, str):
-            nested = quality_gate.get("qualityGate")
-            if isinstance(nested, dict):
-                nested_name = nested.get("name")
-                if isinstance(nested_name, str):
-                    name = nested_name
-        if isinstance(name, str) and name:
-            lines.append(f"Quality gate: {name}")
+    if not isinstance(quality_gate, dict):
+        return
 
+    name = payload.get("name") or quality_gate.get("name")
+    nested = quality_gate.get("qualityGate")
+    if not isinstance(name, str) and isinstance(nested, dict):
+        name = nested.get("name")
+    if isinstance(name, str) and name:
+        lines.append(f"Quality gate: {name}")
+
+
+def append_measures(lines: list[str], payload: dict[str, Any]) -> None:
     measures = payload.get("measures")
-    if isinstance(measures, dict):
-        component = measures.get("component")
-        if isinstance(component, dict):
-            lines.append("Measures:")
-            raw_measures = component.get("measures")
-            if isinstance(raw_measures, list):
-                lines.extend(format_sample_items(raw_measures, key_field="metric"))
+    if not isinstance(measures, dict):
+        return
 
-    results = payload.get("results")
-    if isinstance(results, list):
-        lines.append("Results:")
-        lines.extend(format_sample_items(results, key_field=None))
+    component = measures.get("component")
+    if not isinstance(component, dict):
+        return
 
-    issues = payload.get("issues")
-    if isinstance(issues, list):
-        lines.append(f"Issues returned: {len(issues)}")
-        lines.extend(format_sample_items(issues, key_field="key"))
+    raw_measures = component.get("measures")
+    if isinstance(raw_measures, list):
+        lines.append("Measures:")
+        lines.extend(format_sample_items(raw_measures, key_field="metric"))
 
-    hotspot_items = payload.get("hotspots")
-    if isinstance(hotspot_items, list):
-        lines.append(f"Hotspots returned: {len(hotspot_items)}")
-        lines.extend(format_sample_items(hotspot_items, key_field="key"))
 
-    details = payload.get("details")
-    if isinstance(details, list) and details:
-        lines.append(f"Detail items returned: {len(details)}")
-        lines.extend(format_sample_items(details, key_field="key"))
+def append_list_section(
+    lines: list[str],
+    items: Any,
+    *,
+    key_field: str | None,
+    heading: str | None = None,
+    heading_prefix: str | None = None,
+    skip_empty: bool = False,
+) -> None:
+    if not isinstance(items, list) or (skip_empty and not items):
+        return
 
-    if not lines:
-        return json.dumps(payload, indent=2)
-
-    return "\n".join(lines)
+    lines.append(heading or f"{heading_prefix}: {len(items)}")
+    lines.extend(format_sample_items(items, key_field=key_field))
 
 
 def format_sample_items(items: list[Any], *, key_field: str | None) -> list[str]:
-    rendered: list[str] = []
-    for item in items:
-        if not isinstance(item, dict):
-            rendered.append(f"- {item}")
-            continue
+    return [format_sample_item(item, key_field=key_field) for item in items]
 
-        identifier = ""
-        if key_field is not None:
-            key_value = item.get(key_field)
-            if isinstance(key_value, str) and key_value:
-                identifier = f"{key_value}: "
 
-        detail_parts: list[str] = []
-        for candidate_key in (
-            "status",
-            "resolution",
-            "component",
-            "line",
-            "message",
-            "name",
-            "metric",
-            "value",
-        ):
-            candidate_value = item.get(candidate_key)
-            if isinstance(candidate_value, str) and candidate_value:
-                detail_parts.append(candidate_value)
-            elif isinstance(candidate_value, int):
-                detail_parts.append(f"line {candidate_value}")
+def format_sample_item(item: Any, *, key_field: str | None) -> str:
+    if not isinstance(item, dict):
+        return f"- {item}"
 
-        rendered.append(f"- {identifier}{' | '.join(detail_parts)}")
+    return f"- {format_item_identifier(item, key_field)}{' | '.join(format_item_details(item))}"
 
-    return rendered
+
+def format_item_identifier(item: dict[str, Any], key_field: str | None) -> str:
+    if key_field is None:
+        return ""
+
+    key_value = item.get(key_field)
+    if isinstance(key_value, str) and key_value:
+        return f"{key_value}: "
+    return ""
+
+
+def format_item_details(item: dict[str, Any]) -> list[str]:
+    detail_parts: list[str] = []
+    for candidate_key in (
+        "status",
+        "resolution",
+        "component",
+        "line",
+        "message",
+        "name",
+        "metric",
+        "value",
+    ):
+        candidate_value = item.get(candidate_key)
+        if isinstance(candidate_value, str) and candidate_value:
+            detail_parts.append(candidate_value)
+        elif isinstance(candidate_value, int):
+            detail_parts.append(f"line {candidate_value}")
+    return detail_parts

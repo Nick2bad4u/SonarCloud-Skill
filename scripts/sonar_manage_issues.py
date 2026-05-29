@@ -16,6 +16,8 @@ from sonar_manage_common import (
     normalize_keys,
 )
 
+ISSUES_SEARCH_ENDPOINT = "/api/issues/search"
+
 
 def fetch_issues(
     *,
@@ -40,7 +42,7 @@ def fetch_issues(
         context=context,
         spec=RequestSpec(
             method="GET",
-            endpoint="/api/issues/search",
+            endpoint=ISSUES_SEARCH_ENDPOINT,
             query=query,
         ),
     )
@@ -130,7 +132,7 @@ def assign_issue(
         context=context,
         spec=RequestSpec(
             method="GET",
-            endpoint="/api/issues/search",
+            endpoint=ISSUES_SEARCH_ENDPOINT,
             query={"issues": issue_key, "additionalFields": "_all"},
         ),
     )
@@ -165,7 +167,7 @@ def set_issue_tags(
         context=context,
         spec=RequestSpec(
             method="GET",
-            endpoint="/api/issues/search",
+            endpoint=ISSUES_SEARCH_ENDPOINT,
             query={"issues": issue_key, "additionalFields": "_all"},
         ),
     )
@@ -186,37 +188,15 @@ def transition_issues(
 
     results: list[dict[str, Any]] = []
     for issue_key in normalize_keys(issue_keys, argument_name="issue"):
-        request_spec = RequestSpec(
-            method="POST",
-            endpoint="/api/issues/do_transition",
-            form=drop_none_values(
-                {
-                    "issue": issue_key,
-                    "transition": normalized_transition,
-                    "comment": comment,
-                }
-            ),
-        )
-
-        if dry_run:
-            results.append(
-                build_dry_run_result(
-                    description="Transition issue",
-                    request_spec=request_spec,
-                )
+        results.append(
+            transition_one_issue(
+                context=context,
+                issue_key=issue_key,
+                transition=normalized_transition,
+                comment=comment,
+                dry_run=dry_run,
             )
-            continue
-
-        api_request(context=context, spec=request_spec)
-        refreshed = api_request(
-            context=context,
-            spec=RequestSpec(
-                method="GET",
-                endpoint="/api/issues/search",
-                query={"issues": issue_key, "additionalFields": "_all"},
-            ),
         )
-        results.append(extract_issue_state(refreshed, issue_key))
 
     return {
         "projectKey": context.project_key,
@@ -224,6 +204,44 @@ def transition_issues(
         "dryRun": dry_run,
         "results": results,
     }
+
+
+def transition_one_issue(
+    *,
+    context: ProjectContext,
+    issue_key: str,
+    transition: str,
+    comment: str | None,
+    dry_run: bool,
+) -> dict[str, Any]:
+    request_spec = RequestSpec(
+        method="POST",
+        endpoint="/api/issues/do_transition",
+        form=drop_none_values(
+            {
+                "issue": issue_key,
+                "transition": transition,
+                "comment": comment,
+            }
+        ),
+    )
+
+    if dry_run:
+        return build_dry_run_result(
+            description="Transition issue",
+            request_spec=request_spec,
+        )
+
+    api_request(context=context, spec=request_spec)
+    refreshed = api_request(
+        context=context,
+        spec=RequestSpec(
+            method="GET",
+            endpoint=ISSUES_SEARCH_ENDPOINT,
+            query={"issues": issue_key, "additionalFields": "_all"},
+        ),
+    )
+    return extract_issue_state(refreshed, issue_key)
 
 
 def fetch_hotspots(

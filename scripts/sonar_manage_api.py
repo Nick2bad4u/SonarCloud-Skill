@@ -101,7 +101,7 @@ def parse_properties(file_path: Path) -> dict[str, str]:
     properties: dict[str, str] = {}
     for raw_line in file_path.read_text(encoding="utf8").splitlines():
         stripped = raw_line.strip()
-        if not stripped or stripped.startswith("#") or stripped.startswith("!"):
+        if not stripped or stripped.startswith(("#", "!")):
             continue
 
         separator_index = next(
@@ -243,7 +243,7 @@ def api_request_once(
 
 
 def build_url(base_url: str, endpoint: str, query: dict[str, str] | None) -> str:
-    if endpoint.startswith("https://") or endpoint.startswith("http://"):
+    if endpoint.startswith(("https://", "http://")):
         url = endpoint
     else:
         if not endpoint.startswith("/"):
