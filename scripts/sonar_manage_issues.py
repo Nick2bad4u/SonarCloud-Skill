@@ -274,19 +274,45 @@ def fetch_hotspots(
         raise SonarCliError("Unexpected Sonar hotspots payload.")
 
     if include_details:
-        hotspot_items = payload.get("hotspots", [])
-        details: list[dict[str, Any]] = []
-        if isinstance(hotspot_items, list):
-            for hotspot in hotspot_items:
-                hotspot_key = hotspot.get("key") if isinstance(hotspot, dict) else None
-                if isinstance(hotspot_key, str) and hotspot_key:
-                    details.append(
-                        fetch_hotspot_detail(context=context, hotspot_key=hotspot_key)
-                    )
-
-        payload = {**payload, "details": details}
+        payload = {
+            **payload,
+            "details": fetch_hotspot_details(
+                context=context,
+                hotspots=payload.get("hotspots", []),
+            ),
+        }
 
     return payload
+
+
+def fetch_hotspot_details(
+    *, context: ProjectContext, hotspots: Any
+) -> list[dict[str, Any]]:
+    if not isinstance(hotspots, list):
+        return []
+
+    return [
+        fetch_hotspot_detail(context=context, hotspot_key=hotspot_key)
+        for hotspot_key in hotspot_keys_from_items(hotspots)
+    ]
+
+
+def hotspot_keys_from_items(hotspots: list[Any]) -> list[str]:
+    return [
+        hotspot_key
+        for hotspot in hotspots
+        if (hotspot_key := hotspot_key_from_item(hotspot)) is not None
+    ]
+
+
+def hotspot_key_from_item(hotspot: Any) -> str | None:
+    if not isinstance(hotspot, dict):
+        return None
+
+    hotspot_key = hotspot.get("key")
+    if isinstance(hotspot_key, str) and hotspot_key:
+        return hotspot_key
+    return None
 
 
 def fetch_hotspot_detail(
