@@ -6,13 +6,13 @@ applyTo: "**"
 
 # SonarCloud Skill Guidance
 
-This repository packages the `sonar-manage-findings` Codex skill. Keep changes focused on the skill payload under `.github/skills/sonar-manage-findings/` and the small repository automation needed to publish it.
+This repository packages the `sonar-manage-findings` Codex/open-agent skill. Keep changes focused on the root skill payload and the small repository automation needed to publish it.
 
 ## Scope
 
-- Treat `.github/skills/sonar-manage-findings/SKILL.md` as the user-facing skill entrypoint.
-- Treat `.github/skills/sonar-manage-findings/scripts/manage_sonar_findings.py` as the CLI entrypoint.
-- Keep helper modules in `.github/skills/sonar-manage-findings/scripts/` stdlib-only unless a dependency is explicitly justified and documented.
+- Treat `SKILL.md` as the user-facing skill entrypoint.
+- Treat `scripts/manage_sonar_findings.py` as the CLI entrypoint.
+- Keep helper modules in `scripts/` stdlib-only unless a dependency is explicitly justified and documented.
 - Keep `agents/openai.yaml`, `assets/`, and `LICENSE.txt` synchronized with the packaged skill.
 
 ## Security
@@ -27,8 +27,8 @@ This repository packages the `sonar-manage-findings` Codex skill. Keep changes f
 Run the narrowest useful checks after edits:
 
 ```powershell
-python -m compileall .github/skills/sonar-manage-findings/scripts
-python C:/Users/Nick/.codex/skills/.system/skill-creator/scripts/quick_validate.py .github/skills/sonar-manage-findings
+python -m compileall scripts
+npm run release:verify
 ```
 
 For behavior changes, also run the relevant CLI command with `--json` against a safe repository or use `--dry-run` for mutations.
