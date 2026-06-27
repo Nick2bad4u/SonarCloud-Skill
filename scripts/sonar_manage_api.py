@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import base64
 import json
-import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -10,6 +9,7 @@ from urllib import error, parse, request
 import os
 
 DEFAULT_BASE_URL = "https://sonarcloud.io"
+UNTRUSTED_API_TEXT_MAX_LENGTH = 500
 DEFAULT_ISSUE_STATUSES = "OPEN,CONFIRMED,REOPENED"
 DEFAULT_HOTSPOT_STATUS = "TO_REVIEW"
 DEFAULT_PAGE_SIZE = 100
@@ -83,16 +83,9 @@ def resolve_repo_root(start: Path) -> Path:
     if candidate.is_file():
         candidate = candidate.parent
 
-    process = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"],
-        cwd=candidate,
-        text=True,
-        capture_output=True,
-    )
-    if process.returncode == 0:
-        resolved = process.stdout.strip()
-        if resolved:
-            return Path(resolved)
+    for parent in (candidate, *candidate.parents):
+        if (parent / ".git").exists() or (parent / "sonar-project.properties").is_file():
+            return parent
 
     return candidate
 
@@ -129,6 +122,12 @@ def sanitize_base_url(value: str | None) -> str:
     base_url = (value or DEFAULT_BASE_URL).strip()
     if not base_url:
         return DEFAULT_BASE_URL
+
+    parsed = parse.urlsplit(base_url)
+    if parsed.scheme not in {"https", "http"} or not parsed.netloc:
+        raise SonarCliError(
+            f"Sonar base URL must be an absolute http(s) URL: {base_url}"
+        )
 
     return base_url.rstrip("/")
 
@@ -244,7 +243,7 @@ def api_request_once(
 
 def build_url(base_url: str, endpoint: str, query: dict[str, str] | None) -> str:
     if endpoint.startswith(("https://", "http://")):
-        url = endpoint
+        url = validate_absolute_endpoint(base_url, endpoint)
     else:
         if not endpoint.startswith("/"):
             raise SonarCliError(f"Endpoint must start with '/': {endpoint}")
@@ -255,6 +254,31 @@ def build_url(base_url: str, endpoint: str, query: dict[str, str] | None) -> str
 
     separator = "&" if "?" in url else "?"
     return f"{url}{separator}{parse.urlencode(query)}"
+
+
+def validate_absolute_endpoint(base_url: str, endpoint: str) -> str:
+    base_parts = parse.urlsplit(base_url)
+    endpoint_parts = parse.urlsplit(endpoint)
+
+    if endpoint_parts.scheme not in {"https", "http"} or not endpoint_parts.netloc:
+        raise SonarCliError(
+            f"Absolute endpoint must be an http(s) URL: {endpoint}"
+        )
+
+    if (
+        endpoint_parts.scheme.lower(),
+        endpoint_parts.netloc.lower(),
+    ) != (
+        base_parts.scheme.lower(),
+        base_parts.netloc.lower(),
+    ):
+        raise SonarCliError(
+            "Absolute endpoint host must match the configured Sonar base URL. "
+            "Set --base-url to the intended Sonar origin and pass a relative "
+            "endpoint path."
+        )
+
+    return endpoint
 
 
 def build_auth_header(token: str, auth_scheme: str) -> str:
@@ -272,6 +296,13 @@ def read_error_body(http_error: error.HTTPError) -> str:
         raw_body = ""
 
     if raw_body:
-        return raw_body
+        return mark_untrusted_api_text(raw_body)
 
-    return http_error.reason or "no additional error details"
+    return mark_untrusted_api_text(http_error.reason or "no additional error details")
+
+
+def mark_untrusted_api_text(value: str) -> str:
+    cleaned = " ".join(value.split())
+    if len(cleaned) > UNTRUSTED_API_TEXT_MAX_LENGTH:
+        cleaned = f"{cleaned[:UNTRUSTED_API_TEXT_MAX_LENGTH].rstrip()} ... [truncated]"
+    return f"[untrusted-sonar-text] {cleaned}"

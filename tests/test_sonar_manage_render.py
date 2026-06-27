@@ -69,6 +69,36 @@ class SonarManageRenderTests(unittest.TestCase):
             "[untrusted-sonar-text] external issue text",
         )
 
+    def test_marks_repo_diagnostic_text_without_changing_shape(self) -> None:
+        payload = {
+            "localTsconfigs": [
+                {
+                    "path": "apps/web/tsconfig.json",
+                    "exists": True,
+                    "extends": ["./base.json"],
+                    "packageExtends": ["@scope/tsconfig"],
+                }
+            ],
+            "rootTsconfigCandidates": ["tsconfig.json"],
+        }
+
+        marked = sonar_manage_render.mark_untrusted_payload(payload)
+
+        self.assertEqual(marked["localTsconfigs"][0]["exists"], True)
+        self.assertEqual(
+            marked["localTsconfigs"][0]["path"],
+            "[untrusted-sonar-text] apps/web/tsconfig.json",
+        )
+        self.assertEqual(
+            marked["localTsconfigs"][0]["extends"],
+            ["[untrusted-sonar-text] ./base.json"],
+        )
+        self.assertEqual(
+            marked["localTsconfigs"][0]["packageExtends"],
+            ["[untrusted-sonar-text] @scope/tsconfig"],
+        )
+        self.assertEqual(marked["rootTsconfigCandidates"], ["tsconfig.json"])
+
 
 if __name__ == "__main__":
     unittest.main()

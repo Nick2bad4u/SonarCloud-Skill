@@ -673,8 +673,8 @@ def parse_args() -> argparse.Namespace:
         "--endpoint",
         required=True,
         help=(
-            "API endpoint path such as /api/issues/search or a full URL like "
-            "https://api.sonarcloud.io/organizations/organizations"
+            "API endpoint path such as /api/issues/search. Absolute URLs are "
+            "allowed only when their origin matches --base-url."
         ),
     )
     api_call_parser.add_argument(
