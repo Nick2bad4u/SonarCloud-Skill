@@ -56,6 +56,8 @@ python "<path-to-skill>/scripts/manage_sonar_findings.py" review-hotspot --repo 
 
 ## Quality Gates And Profiles
 
+Use these commands when the user asks to inspect or change a project's assigned quality gate or quality profile. Inspect first, dry-run the intended change, then rerun the list/get command after applying it.
+
 ```powershell
 python "<path-to-skill>/scripts/manage_sonar_findings.py" quality-gate-status --repo "." --json
 python "<path-to-skill>/scripts/manage_sonar_findings.py" list-quality-gates --repo "." --json
@@ -68,7 +70,11 @@ python "<path-to-skill>/scripts/manage_sonar_findings.py" set-quality-profile --
 python "<path-to-skill>/scripts/manage_sonar_findings.py" unset-quality-profile --repo "." --quality-profile <profile-key> --dry-run
 ```
 
+To apply a verified change, rerun the exact mutation without `--dry-run`. If Sonar returns a permission error, report the missing permission instead of retrying with a broader command.
+
 ## Settings And Tags
+
+Use settings and tag mutations for project-level scanner configuration and project classification. Prefer `settings-values` and `settings-definitions` before changing a key.
 
 ```powershell
 python "<path-to-skill>/scripts/manage_sonar_findings.py" settings-values --repo "." --key sonar.typescript.tsconfigPaths --json

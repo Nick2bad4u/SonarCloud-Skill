@@ -38,6 +38,17 @@ Use `--dry-run` before mutating issues, hotspots, settings, tags, quality gates,
 
 Do not mark findings false positive, won't fix, safe, reviewed, or fixed unless the relevant source code, workflow, scanner configuration, or project setting has actually been checked.
 
+## Allowed Mutations
+
+This skill may change Sonar project state when the user asks for it and the token has permission. Supported mutations include issue comments, assignments, tags, issue transitions, hotspot reviews, project settings, project tags, quality gate selection, and quality profile assignment.
+
+For quality profiles and other project configuration:
+
+1. Inspect first with `list-quality-profiles`, `quality-profile-changelog`, `get-quality-gate`, `settings-values`, or `settings-definitions`.
+2. Dry-run the intended change with `set-quality-profile`, `unset-quality-profile`, `set-quality-gate`, `unset-quality-gate`, `settings-set`, `settings-reset`, or `set-project-tags`.
+3. Apply the same command without `--dry-run` only after the target profile, gate, setting key, tag set, and project key are clear.
+4. Verify with the corresponding list/get/settings command and explain the permission or API error if Sonar rejects the change.
+
 ## Helper
 
 Run the bundled helper from this skill directory:
@@ -62,7 +73,7 @@ The helper is repository-agnostic:
 2. Resolve the target project.
    Prefer `--repo "."` and auto-detection from `sonar-project.properties`; use `--project-key` only when the repo cannot define one.
 3. Inspect before changing state.
-   Start with `summary`. Use `list-issues`, `issue-changelog`, `list-hotspots`, `show-hotspot`, `quality-gate-status`, `settings-values`, or `project-analyses` for more context.
+   Start with `summary`. Use `list-issues`, `issue-changelog`, `list-hotspots`, `show-hotspot`, `quality-gate-status`, `list-quality-profiles`, `settings-values`, or `project-analyses` for more context.
 4. Classify findings from evidence.
    Fix real code/config defects first. Use false-positive, won't-fix, `SAFE`, or `FIXED` only when the code/config context supports that decision.
 5. Dry-run risky mutations.
@@ -88,6 +99,8 @@ For mutations, dry-run first:
 ```powershell
 python "<path-to-skill>/scripts/manage_sonar_findings.py" transition-issue --repo "." --issue AZ123 --transition resolve --comment "Fixed in code." --dry-run
 python "<path-to-skill>/scripts/manage_sonar_findings.py" review-hotspot --repo "." --hotspot AZ999 --status REVIEWED --resolution SAFE --comment "Reviewed as safe in this context." --dry-run
+python "<path-to-skill>/scripts/manage_sonar_findings.py" set-quality-profile --repo "." --quality-profile <profile-key> --dry-run
+python "<path-to-skill>/scripts/manage_sonar_findings.py" set-quality-gate --repo "." --gate-name "Sonar way" --dry-run
 python "<path-to-skill>/scripts/manage_sonar_findings.py" settings-set --repo "." --key sonar.typescript.tsconfigPaths --value tsconfig.json --dry-run
 ```
 
