@@ -1,0 +1,102 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
+name: Python CI
+
+run-name: Python CI • ${{ github.ref_name }} @${{ github.actor }}
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: "python-ci-${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0 # v6.0.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: Setup Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Run pytest with coverage
+        run: npm run test:python
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@e53489f4d376d79066609109e7a95a29eb3740b1 # v7.0.0
+        with:
+          use_oidc: true
+          slug: ${{ github.repository }}
+          files: test-report.junit.xml
+          flags: python
+          name: pytest-junit-python
+          report_type: test_results
+          fail_ci_if_error: true
+          disable_search: true
+          verbose: true
+
+      - name: Upload coverage to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@e53489f4d376d79066609109e7a95a29eb3740b1 # v7.0.0
+        with:
+          use_oidc: true
+          slug: ${{ github.repository }}
+          files: coverage/python.xml
+          flags: python
+          name: pytest-coverage-python
+          report_type: coverage
+          fail_ci_if_error: true
+          disable_search: true
+          verbose: true
+
+      - name: Run Python lint
+        run: npm run lint:python
+
+      - name: Run Python type checks
+        run: npm run typecheck:python
+
+      - name: Compile Python files
+        run: npm run compile:python
+
+      - name: Validate skill package
+        run: npm run validate
+
+      - name: Dry-run npm package
+        run: npm run pack:dry-run

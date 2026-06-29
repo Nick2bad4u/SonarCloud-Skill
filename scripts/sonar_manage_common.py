@@ -1,8 +1,15 @@
 from __future__ import annotations
 
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any, cast
 
-from sonar_manage_api import ProjectContext, RequestSpec, SonarCliError
+from sonar_manage_api import SonarCliError
+
+type JsonObject = dict[str, Any]
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from sonar_manage_api import ProjectContext, RequestSpec
 
 
 def normalize_keys(keys: Iterable[str], *, argument_name: str) -> list[str]:
@@ -18,9 +25,7 @@ def normalize_keys(keys: Iterable[str], *, argument_name: str) -> list[str]:
     return normalized
 
 
-def resolve_csv_values(
-    raw_values: Iterable[str] | None, *, argument_name: str
-) -> list[str]:
+def resolve_csv_values(raw_values: Iterable[str] | None, *, argument_name: str) -> list[str]:
     _ = argument_name
     resolved: list[str] = []
     for raw_value in raw_values or []:
@@ -48,50 +53,46 @@ def resolve_tag_values(
     raise SonarCliError(f"Provide at least one --{argument_name} value or use --clear.")
 
 
-def parse_name_value_pairs(
-    raw_pairs: Iterable[str] | None, *, argument_name: str
-) -> dict[str, str]:
+def parse_name_value_pairs(raw_pairs: Iterable[str] | None, *, argument_name: str) -> dict[str, str]:
     pairs: dict[str, str] = {}
     for raw_pair in raw_pairs or []:
         if "=" not in raw_pair:
-            raise SonarCliError(
-                f"Invalid --{argument_name} value '{raw_pair}'. Expected key=value."
-            )
+            raise SonarCliError(f"Invalid --{argument_name} value '{raw_pair}'. Expected key=value.")
 
         key, value = raw_pair.split("=", 1)
         normalized_key = key.strip()
         if not normalized_key:
-            raise SonarCliError(
-                f"Invalid --{argument_name} value '{raw_pair}'. Empty key."
-            )
+            raise SonarCliError(f"Invalid --{argument_name} value '{raw_pair}'. Empty key.")
 
         pairs[normalized_key] = value.strip()
 
     return pairs
 
 
-def extract_issue_state(payload: Any, issue_key: str) -> dict[str, Any]:
+def extract_issue_state(payload: Any, issue_key: str) -> JsonObject:
     if not isinstance(payload, dict):
         raise SonarCliError(f"Unexpected issue state payload for {issue_key}.")
 
-    issues = payload.get("issues")
+    payload_object = cast("JsonObject", payload)
+    issues = payload_object.get("issues")
     if not isinstance(issues, list) or not issues:
         raise SonarCliError(f"No issue details were returned for {issue_key}.")
 
-    issue = issues[0]
+    issue = cast("list[object]", issues)[0]
     if not isinstance(issue, dict):
         raise SonarCliError(f"Unexpected issue detail shape for {issue_key}.")
 
+    issue_object = cast("JsonObject", issue)
     return {
         "issue": issue_key,
-        "status": issue.get("status"),
-        "resolution": issue.get("resolution"),
-        "type": issue.get("type"),
-        "severity": issue.get("severity"),
-        "component": issue.get("component"),
-        "line": issue.get("line"),
-        "message": issue.get("message"),
-        "tags": issue.get("tags"),
+        "status": issue_object.get("status"),
+        "resolution": issue_object.get("resolution"),
+        "type": issue_object.get("type"),
+        "severity": issue_object.get("severity"),
+        "component": issue_object.get("component"),
+        "line": issue_object.get("line"),
+        "message": issue_object.get("message"),
+        "tags": issue_object.get("tags"),
     }
 
 
@@ -100,7 +101,7 @@ def build_dry_run_payload(
     context: ProjectContext,
     description: str,
     request_spec: RequestSpec,
-) -> dict[str, Any]:
+) -> JsonObject:
     return {
         "projectKey": context.project_key,
         "dryRun": True,
@@ -115,7 +116,7 @@ def build_dry_run_result(
     *,
     description: str,
     request_spec: RequestSpec,
-) -> dict[str, Any]:
+) -> JsonObject:
     return {
         "description": description,
         "method": request_spec.method,

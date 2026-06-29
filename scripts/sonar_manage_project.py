@@ -1,20 +1,25 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from sonar_manage_api import (
-    ProjectContext,
     RequestSpec,
     SonarCliError,
     api_request,
     drop_none_values,
+    require_json_object,
     with_optional_organization,
 )
 from sonar_manage_common import build_dry_run_payload, resolve_csv_values
 from sonar_manage_issues import fetch_hotspots, fetch_issues
 
+if TYPE_CHECKING:
+    from sonar_manage_api import ProjectContext
 
-def build_summary(args: Any, context: ProjectContext) -> dict[str, Any]:
+type JsonObject = dict[str, Any]
+
+
+def build_summary(args: Any, context: ProjectContext) -> JsonObject:
     issues = fetch_issues(
         context=context,
         issue_statuses=args.issue_statuses,
@@ -49,8 +54,9 @@ def build_summary(args: Any, context: ProjectContext) -> dict[str, Any]:
     )
 
     sample_size = max(1, args.sample_size)
-    issue_items = issues.get("issues", []) if isinstance(issues, dict) else []
-    hotspot_items = hotspots.get("hotspots", []) if isinstance(hotspots, dict) else []
+    issue_items = list_or_empty(issues.get("issues"))
+    hotspot_items = list_or_empty(hotspots.get("hotspots"))
+    hotspot_paging = object_or_empty(hotspots.get("paging"))
 
     return {
         "repoRoot": str(context.repo_root),
@@ -60,20 +66,14 @@ def build_summary(args: Any, context: ProjectContext) -> dict[str, Any]:
         "tokenEnv": context.token_env_name,
         "authScheme": context.auth_scheme,
         "sonarPropertiesPath": (
-            str(context.sonar_properties_path)
-            if context.sonar_properties_path is not None
-            else None
+            str(context.sonar_properties_path) if context.sonar_properties_path is not None else None
         ),
         "openIssues": {
-            "total": issues.get("total", 0) if isinstance(issues, dict) else 0,
+            "total": issues.get("total", 0),
             "sample": issue_items[:sample_size],
         },
         "hotspots": {
-            "total": (
-                hotspots.get("paging", {}).get("total", 0)
-                if isinstance(hotspots, dict)
-                else 0
-            ),
+            "total": hotspot_paging.get("total", 0),
             "sample": hotspot_items[:sample_size],
         },
         "qualityGateStatus": quality_gate_status,
@@ -83,12 +83,24 @@ def build_summary(args: Any, context: ProjectContext) -> dict[str, Any]:
     }
 
 
+def list_or_empty(value: Any) -> list[object]:
+    if not isinstance(value, list):
+        return []
+    return cast("list[object]", value)
+
+
+def object_or_empty(value: Any) -> JsonObject:
+    if not isinstance(value, dict):
+        return {}
+    return cast("JsonObject", value)
+
+
 def fetch_measures(
     *,
     context: ProjectContext,
     component: str,
     metrics: list[str],
-) -> dict[str, Any]:
+) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -101,10 +113,7 @@ def fetch_measures(
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected measures payload.")
-
-    return payload
+    return require_json_object(payload, "Unexpected measures payload.")
 
 
 def fetch_measure_history(
@@ -114,7 +123,7 @@ def fetch_measure_history(
     metrics: list[str],
     from_date: str | None,
     to_date: str | None,
-) -> dict[str, Any]:
+) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -131,17 +140,14 @@ def fetch_measure_history(
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected measure history payload.")
-
-    return payload
+    return require_json_object(payload, "Unexpected measure history payload.")
 
 
 def fetch_project_component_info(
     *,
     context: ProjectContext,
     component: str,
-) -> dict[str, Any]:
+) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -151,17 +157,14 @@ def fetch_project_component_info(
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected project component payload.")
-
-    return payload
+    return require_json_object(payload, "Unexpected project component payload.")
 
 
 def fetch_quality_gate_status(
     *,
     context: ProjectContext,
     project_key: str,
-) -> dict[str, Any]:
+) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -171,13 +174,10 @@ def fetch_quality_gate_status(
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected quality gate status payload.")
-
-    return payload
+    return require_json_object(payload, "Unexpected quality gate status payload.")
 
 
-def list_quality_gates(*, context: ProjectContext) -> dict[str, Any]:
+def list_quality_gates(*, context: ProjectContext) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -187,17 +187,14 @@ def list_quality_gates(*, context: ProjectContext) -> dict[str, Any]:
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected quality gates payload.")
-
-    return payload
+    return require_json_object(payload, "Unexpected quality gates payload.")
 
 
 def fetch_project_quality_gate(
     *,
     context: ProjectContext,
     project_key: str,
-) -> dict[str, Any]:
+) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -210,10 +207,7 @@ def fetch_project_quality_gate(
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected project quality gate payload.")
-
-    return payload
+    return require_json_object(payload, "Unexpected project quality gate payload.")
 
 
 def set_quality_gate(
@@ -223,7 +217,7 @@ def set_quality_gate(
     gate_id: str | None,
     gate_name: str | None,
     dry_run: bool,
-) -> dict[str, Any]:
+) -> JsonObject:
     resolved_gate_id = resolve_quality_gate_id(
         context=context,
         gate_id=gate_id,
@@ -267,7 +261,7 @@ def unset_quality_gate(
     context: ProjectContext,
     project_key: str,
     dry_run: bool,
-) -> dict[str, Any]:
+) -> JsonObject:
     request_spec = RequestSpec(
         method="POST",
         endpoint="/api/qualitygates/deselect",
@@ -319,7 +313,7 @@ def resolve_quality_gate_id(
         raise SonarCliError("No quality gates were returned for name resolution.")
 
     normalized_name = gate_name.strip()
-    for quality_gate in quality_gates:
+    for quality_gate in cast("list[object]", quality_gates):
         gate_id_value = matching_quality_gate_id(quality_gate, normalized_name)
         if gate_id_value is not None:
             return gate_id_value
@@ -328,10 +322,14 @@ def resolve_quality_gate_id(
 
 
 def matching_quality_gate_id(candidate: Any, normalized_name: str) -> str | None:
-    if not isinstance(candidate, dict) or candidate.get("name") != normalized_name:
+    if not isinstance(candidate, dict):
         return None
 
-    gate_id_value = candidate.get("id")
+    candidate_object = cast("JsonObject", candidate)
+    if candidate_object.get("name") != normalized_name:
+        return None
+
+    gate_id_value = candidate_object.get("id")
     if isinstance(gate_id_value, int):
         return str(gate_id_value)
     if isinstance(gate_id_value, str) and gate_id_value:
@@ -345,7 +343,7 @@ def list_quality_profiles(
     project_key: str,
     language: str | None,
     quality_profile: str | None,
-) -> dict[str, Any]:
+) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -364,17 +362,14 @@ def list_quality_profiles(
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected quality profiles payload.")
-
-    return payload
+    return require_json_object(payload, "Unexpected quality profiles payload.")
 
 
 def fetch_quality_profile_changelog(
     *,
     context: ProjectContext,
     quality_profile_key: str,
-) -> dict[str, Any]:
+) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -384,10 +379,7 @@ def fetch_quality_profile_changelog(
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected quality profile changelog payload.")
-
-    return payload
+    return require_json_object(payload, "Unexpected quality profile changelog payload.")
 
 
 def set_quality_profile(
@@ -396,7 +388,7 @@ def set_quality_profile(
     project_key: str,
     quality_profile_key: str,
     dry_run: bool,
-) -> dict[str, Any]:
+) -> JsonObject:
     request_spec = RequestSpec(
         method="POST",
         endpoint="/api/qualityprofiles/add_project",
@@ -428,7 +420,7 @@ def unset_quality_profile(
     project_key: str,
     quality_profile_key: str,
     dry_run: bool,
-) -> dict[str, Any]:
+) -> JsonObject:
     request_spec = RequestSpec(
         method="POST",
         endpoint="/api/qualityprofiles/remove_project",
@@ -459,7 +451,7 @@ def fetch_settings_values(
     context: ProjectContext,
     component: str,
     keys: list[str],
-) -> dict[str, Any]:
+) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -474,10 +466,7 @@ def fetch_settings_values(
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected settings values payload.")
-
-    return payload
+    return require_json_object(payload, "Unexpected settings values payload.")
 
 
 def fetch_settings_definitions(
@@ -485,7 +474,7 @@ def fetch_settings_definitions(
     context: ProjectContext,
     component: str,
     keys: list[str],
-) -> dict[str, Any]:
+) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -500,10 +489,7 @@ def fetch_settings_definitions(
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected settings definitions payload.")
-
-    return payload
+    return require_json_object(payload, "Unexpected settings definitions payload.")
 
 
 def set_setting_value(
@@ -514,7 +500,7 @@ def set_setting_value(
     value: str | None,
     values: list[str] | None,
     dry_run: bool,
-) -> dict[str, Any]:
+) -> JsonObject:
     form = {
         "component": component,
         "key": key,
@@ -549,7 +535,7 @@ def reset_setting_value(
     component: str,
     key: str,
     dry_run: bool,
-) -> dict[str, Any]:
+) -> JsonObject:
     request_spec = RequestSpec(
         method="POST",
         endpoint="/api/settings/reset",
@@ -575,7 +561,7 @@ def search_project_tags(
     context: ProjectContext,
     query_text: str | None,
     page_size: int,
-) -> dict[str, Any]:
+) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -593,10 +579,7 @@ def search_project_tags(
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected project tags payload.")
-
-    return payload
+    return require_json_object(payload, "Unexpected project tags payload.")
 
 
 def set_project_tags(
@@ -605,7 +588,7 @@ def set_project_tags(
     project_key: str,
     tags: list[str],
     dry_run: bool,
-) -> dict[str, Any]:
+) -> JsonObject:
     request_spec = RequestSpec(
         method="POST",
         endpoint="/api/project_tags/set",
@@ -634,7 +617,7 @@ def direct_api_call(
     query: dict[str, str],
     form: dict[str, str],
     dry_run: bool,
-) -> dict[str, Any]:
+) -> JsonObject:
     request_spec = RequestSpec(
         method=method,
         endpoint=endpoint,

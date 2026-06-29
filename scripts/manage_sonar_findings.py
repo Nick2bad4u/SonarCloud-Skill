@@ -1,20 +1,26 @@
 #!/usr/bin/env python3
+# pyright: reportUnusedCallResult=false
 """Inspect and manage project-level SonarCloud or SonarQube resources."""
 
 from __future__ import annotations
 
 import argparse
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
 from sonar_manage_api import (
     DEFAULT_AUTH_SCHEME,
     DEFAULT_HOTSPOT_STATUS,
     DEFAULT_ISSUE_STATUSES,
     DEFAULT_PAGE_SIZE,
     DEFAULT_SUMMARY_METRICS,
-    ProjectContext,
     SonarCliError,
     resolve_context,
+)
+from sonar_manage_common import (
+    parse_name_value_pairs,
+    resolve_csv_values,
+    resolve_tag_values,
 )
 from sonar_manage_diagnostics import (
     DEFAULT_PROJECT_ANALYSES_PAGE_SIZE,
@@ -22,11 +28,6 @@ from sonar_manage_diagnostics import (
     fetch_ce_task,
     fetch_project_analyses,
     investigate_tsconfig_warning,
-)
-from sonar_manage_common import (
-    parse_name_value_pairs,
-    resolve_csv_values,
-    resolve_tag_values,
 )
 from sonar_manage_issues import (
     add_issue_comment,
@@ -63,6 +64,9 @@ from sonar_manage_project import (
 )
 from sonar_manage_render import emit_output
 
+if TYPE_CHECKING:
+    from sonar_manage_api import ProjectContext
+
 HELP_COMPONENT_KEY_OVERRIDE = "Optional component key override. Defaults to the project key."
 HELP_DRY_RUN = "Print the intended mutation without sending it."
 HELP_ISSUE_KEY = "Issue key."
@@ -73,8 +77,7 @@ HELP_QUALITY_PROFILE_KEY = "Quality profile key."
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Inspect and manage project-level SonarCloud or SonarQube resources "
-            "using an environment-variable token."
+            "Inspect and manage project-level SonarCloud or SonarQube resources using an environment-variable token."
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
@@ -102,20 +105,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--base-url",
         default=None,
-        help=(
-            "Sonar base URL. Defaults to sonar.host.url from "
-            "sonar-project.properties or SonarCloud."
-        ),
+        help=("Sonar base URL. Defaults to sonar.host.url from sonar-project.properties or SonarCloud."),
     )
     parser.add_argument(
         "--token-env",
         action="append",
         dest="token_envs",
         default=None,
-        help=(
-            "Environment variable name that may contain the Sonar token. "
-            "Repeat to provide fallbacks."
-        ),
+        help=("Environment variable name that may contain the Sonar token. Repeat to provide fallbacks."),
     )
     parser.add_argument(
         "--auth-scheme",
@@ -403,7 +400,10 @@ def parse_args() -> argparse.Namespace:
 
     subparsers.add_parser(
         "tsconfig-warning-check",
-        help="Investigate the common Sonar TypeScript tsconfig warning using project settings, CE metadata, and the local tsconfig graph.",
+        help=(
+            "Investigate the common Sonar TypeScript tsconfig warning using "
+            "project settings, CE metadata, and the local tsconfig graph."
+        ),
     )
 
     quality_gate_status_parser = subparsers.add_parser(
@@ -581,9 +581,7 @@ def parse_args() -> argparse.Namespace:
         help="Set a project setting value.",
     )
     settings_set_parser.add_argument("--key", required=True, help="Setting key.")
-    setting_values_group = settings_set_parser.add_mutually_exclusive_group(
-        required=True
-    )
+    setting_values_group = settings_set_parser.add_mutually_exclusive_group(required=True)
     setting_values_group.add_argument(
         "--value",
         default=None,
@@ -743,9 +741,7 @@ def normalize_global_args(argv: list[str]) -> list[str]:
     return [*global_args, *other_args]
 
 
-def add_issue_listing_args(
-    parser: argparse.ArgumentParser, *, include_page: bool
-) -> None:
+def add_issue_listing_args(parser: argparse.ArgumentParser, *, include_page: bool) -> None:
     parser.add_argument(
         "--issue-statuses",
         default=DEFAULT_ISSUE_STATUSES,
@@ -800,19 +796,18 @@ def main() -> int:
         context = resolve_context(args)
         payload = dispatch_command(args, context)
         emit_output(payload, as_json=args.json)
-        return 0
     except SonarCliError as error_message:
-        print(f"Error: {error_message}", file=sys.stderr)
+        sys.stderr.write(f"Error: {error_message}\n")
         return 1
+    else:
+        return 0
 
 
 def dispatch_command(args: argparse.Namespace, context: ProjectContext) -> Any:
     handlers = {
         "summary": lambda: build_summary(args, context),
         "list-issues": lambda: command_list_issues(args, context),
-        "issue-changelog": lambda: fetch_issue_changelog(
-            context=context, issue_key=args.issue
-        ),
+        "issue-changelog": lambda: fetch_issue_changelog(context=context, issue_key=args.issue),
         "comment-issue": lambda: add_issue_comment(
             context=context,
             issue_key=args.issue,
@@ -839,9 +834,7 @@ def dispatch_command(args: argparse.Namespace, context: ProjectContext) -> Any:
             dry_run=args.dry_run,
         ),
         "list-hotspots": lambda: command_list_hotspots(args, context),
-        "show-hotspot": lambda: fetch_hotspot_detail(
-            context=context, hotspot_key=args.hotspot
-        ),
+        "show-hotspot": lambda: fetch_hotspot_detail(context=context, hotspot_key=args.hotspot),
         "review-hotspot": lambda: review_hotspots(
             context=context,
             hotspot_keys=args.hotspots,
@@ -873,9 +866,7 @@ def dispatch_command(args: argparse.Namespace, context: ProjectContext) -> Any:
             page=args.page,
             page_size=args.page_size,
         ),
-        "tsconfig-warning-check": lambda: investigate_tsconfig_warning(
-            context=context
-        ),
+        "tsconfig-warning-check": lambda: investigate_tsconfig_warning(context=context),
         "quality-gate-status": lambda: fetch_quality_gate_status(
             context=context,
             project_key=args.project or context.project_key,
@@ -955,9 +946,7 @@ def dispatch_command(args: argparse.Namespace, context: ProjectContext) -> Any:
         raise SonarCliError(f"Unsupported command: {args.command}") from error
 
 
-def command_list_issues(
-    args: argparse.Namespace, context: ProjectContext
-) -> dict[str, Any]:
+def command_list_issues(args: argparse.Namespace, context: ProjectContext) -> dict[str, Any]:
     return fetch_issues(
         context=context,
         issue_statuses=args.issue_statuses,
@@ -967,9 +956,7 @@ def command_list_issues(
     )
 
 
-def command_list_hotspots(
-    args: argparse.Namespace, context: ProjectContext
-) -> dict[str, Any]:
+def command_list_hotspots(args: argparse.Namespace, context: ProjectContext) -> dict[str, Any]:
     return fetch_hotspots(
         context=context,
         hotspot_status=args.hotspot_status,
@@ -990,9 +977,7 @@ def command_measures(args: argparse.Namespace, context: ProjectContext) -> dict[
     )
 
 
-def command_settings_values(
-    args: argparse.Namespace, context: ProjectContext
-) -> dict[str, Any]:
+def command_settings_values(args: argparse.Namespace, context: ProjectContext) -> dict[str, Any]:
     return fetch_settings_values(
         context=context,
         component=args.component or context.project_key,
@@ -1000,9 +985,7 @@ def command_settings_values(
     )
 
 
-def command_settings_definitions(
-    args: argparse.Namespace, context: ProjectContext
-) -> dict[str, Any]:
+def command_settings_definitions(args: argparse.Namespace, context: ProjectContext) -> dict[str, Any]:
     return fetch_settings_definitions(
         context=context,
         component=args.component or context.project_key,

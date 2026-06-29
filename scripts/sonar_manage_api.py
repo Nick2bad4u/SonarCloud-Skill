@@ -2,27 +2,33 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any, cast
 from urllib import error, parse, request
-import os
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+JsonObject = dict[str, Any]
 
 DEFAULT_BASE_URL = "https://sonarcloud.io"
 UNTRUSTED_API_TEXT_MAX_LENGTH = 500
 DEFAULT_ISSUE_STATUSES = "OPEN,CONFIRMED,REOPENED"
 DEFAULT_HOTSPOT_STATUS = "TO_REVIEW"
 DEFAULT_PAGE_SIZE = 100
-DEFAULT_SUMMARY_METRICS = (
-    "alert_status,bugs,vulnerabilities,code_smells,coverage,"
-    "duplicated_lines_density,ncloc"
-)
+DEFAULT_SUMMARY_METRICS = "alert_status,bugs,vulnerabilities,code_smells,coverage,duplicated_lines_density,ncloc"
 DEFAULT_TOKEN_ENVS = ("SONAR_TOKEN",)
 DEFAULT_AUTH_SCHEME = "auto"
 
 
 class SonarCliError(RuntimeError):
     """Raised for recoverable CLI errors."""
+
+
+def join_message(*parts: str) -> str:
+    return " ".join(parts)
 
 
 @dataclass(frozen=True)
@@ -48,17 +54,15 @@ class RequestSpec:
 def resolve_context(args: Any) -> ProjectContext:
     repo_root = resolve_repo_root(Path(args.repo))
     sonar_properties_path = repo_root / "sonar-project.properties"
-    properties = (
-        parse_properties(sonar_properties_path)
-        if sonar_properties_path.is_file()
-        else {}
-    )
+    properties = parse_properties(sonar_properties_path) if sonar_properties_path.is_file() else {}
 
     project_key = args.project_key or properties.get("sonar.projectKey")
     if not project_key:
         raise SonarCliError(
-            "Could not resolve a Sonar project key. Provide --project-key or add "
-            "sonar.projectKey to sonar-project.properties."
+            join_message(
+                "Could not resolve a Sonar project key. Provide --project-key or",
+                "add sonar.projectKey to sonar-project.properties.",
+            )
         )
 
     base_url = sanitize_base_url(args.base_url or properties.get("sonar.host.url"))
@@ -72,9 +76,7 @@ def resolve_context(args: Any) -> ProjectContext:
         token=token,
         token_env_name=token_env_name,
         auth_scheme=args.auth_scheme,
-        sonar_properties_path=(
-            sonar_properties_path if sonar_properties_path.exists() else None
-        ),
+        sonar_properties_path=(sonar_properties_path if sonar_properties_path.exists() else None),
     )
 
 
@@ -98,11 +100,7 @@ def parse_properties(file_path: Path) -> dict[str, str]:
             continue
 
         separator_index = next(
-            (
-                index
-                for index, character in enumerate(stripped)
-                if character in {"=", ":"}
-            ),
+            (index for index, character in enumerate(stripped) if character in {"=", ":"}),
             -1,
         )
 
@@ -125,9 +123,7 @@ def sanitize_base_url(value: str | None) -> str:
 
     parsed = parse.urlsplit(base_url)
     if parsed.scheme not in {"https", "http"} or not parsed.netloc:
-        raise SonarCliError(
-            f"Sonar base URL must be an absolute http(s) URL: {base_url}"
-        )
+        raise SonarCliError(f"Sonar base URL must be an absolute http(s) URL: {base_url}")
 
     return base_url.rstrip("/")
 
@@ -145,10 +141,7 @@ def resolve_token(token_envs: Iterable[str]) -> tuple[str, str]:
             return token, name
 
     env_list = ", ".join(checked_names or list(DEFAULT_TOKEN_ENVS))
-    raise SonarCliError(
-        "No Sonar token was found in the configured environment variables: "
-        f"{env_list}."
-    )
+    raise SonarCliError(f"No Sonar token was found in the configured environment variables: {env_list}.")
 
 
 def drop_none_values(values: dict[str, str | None]) -> dict[str, str]:
@@ -211,7 +204,7 @@ def api_request_once(
         data = parse.urlencode(spec.form).encode("utf8")
         headers["Content-Type"] = "application/x-www-form-urlencoded"
 
-    request_object = request.Request(
+    request_object = request.Request(  # noqa: S310 - URL is validated against the configured Sonar origin.
         url=url,
         data=data,
         headers=headers,
@@ -219,18 +212,15 @@ def api_request_once(
     )
 
     try:
-        with request.urlopen(request_object) as response:
+        with request.urlopen(request_object) as response:  # noqa: S310 - request_object uses the validated URL above.
             raw_body = response.read()
     except error.HTTPError as http_error:
         detail = read_error_body(http_error)
         raise SonarCliError(
-            f"Sonar API {spec.method} {spec.endpoint} failed with HTTP "
-            f"{http_error.code}: {detail}"
+            f"Sonar API {spec.method} {spec.endpoint} failed with HTTP {http_error.code}: {detail}"
         ) from http_error
     except error.URLError as url_error:
-        raise SonarCliError(
-            f"Failed to reach Sonar at {context.base_url}: {url_error.reason}"
-        ) from url_error
+        raise SonarCliError(f"Failed to reach Sonar at {context.base_url}: {url_error.reason}") from url_error
 
     if not raw_body:
         return None
@@ -261,9 +251,7 @@ def validate_absolute_endpoint(base_url: str, endpoint: str) -> str:
     endpoint_parts = parse.urlsplit(endpoint)
 
     if endpoint_parts.scheme not in {"https", "http"} or not endpoint_parts.netloc:
-        raise SonarCliError(
-            f"Absolute endpoint must be an http(s) URL: {endpoint}"
-        )
+        raise SonarCliError(f"Absolute endpoint must be an http(s) URL: {endpoint}")
 
     if (
         endpoint_parts.scheme.lower(),
@@ -273,9 +261,11 @@ def validate_absolute_endpoint(base_url: str, endpoint: str) -> str:
         base_parts.netloc.lower(),
     ):
         raise SonarCliError(
-            "Absolute endpoint host must match the configured Sonar base URL. "
-            "Set --base-url to the intended Sonar origin and pass a relative "
-            "endpoint path."
+            join_message(
+                "Absolute endpoint host must match the configured Sonar base URL.",
+                "Set --base-url to the intended Sonar origin and pass a relative",
+                "endpoint path.",
+            )
         )
 
     return endpoint
@@ -285,14 +275,14 @@ def build_auth_header(token: str, auth_scheme: str) -> str:
     if auth_scheme == "bearer":
         return f"Bearer {token}"
 
-    encoded = base64.b64encode(f"{token}:".encode("utf8")).decode("ascii")
+    encoded = base64.b64encode(f"{token}:".encode()).decode("ascii")
     return f"Basic {encoded}"
 
 
 def read_error_body(http_error: error.HTTPError) -> str:
     try:
         raw_body = http_error.read().decode("utf8", errors="replace").strip()
-    except Exception:  # pragma: no cover
+    except OSError, UnicodeError:  # pragma: no cover
         raw_body = ""
 
     if raw_body:
@@ -306,3 +296,10 @@ def mark_untrusted_api_text(value: str) -> str:
     if len(cleaned) > UNTRUSTED_API_TEXT_MAX_LENGTH:
         cleaned = f"{cleaned[:UNTRUSTED_API_TEXT_MAX_LENGTH].rstrip()} ... [truncated]"
     return f"[untrusted-sonar-text] {cleaned}"
+
+
+def require_json_object(payload: Any, error_message: str) -> JsonObject:
+    if not isinstance(payload, dict):
+        raise SonarCliError(error_message)
+
+    return cast("JsonObject", payload)

@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "skill_path": "SKILL.md",
+  "runs": [
+    {
+      "timestamp_utc": "2026-06-29T04:10:20Z",
+      "skillcheck_version": "1.3.0",
+      "skill_content_hash": "5546e229961fb394",
+      "validation_modes": {
+        "symbolic": true,
+        "critique": false,
+        "graph": true
+      },
+      "agents": {
+        "critique_agent": null,
+        "graph_agent": null
+      },
+      "result": {
+        "error": 0,
+        "warning": 11,
+        "info": 1,
+        "valid": true
+      },
+      "exit_code": 0
+    },
+    {
+      "timestamp_utc": "2026-06-29T04:26:03Z",
+      "skillcheck_version": "1.3.0",
+      "skill_content_hash": "5546e229961fb394",
+      "validation_modes": {
+        "symbolic": true,
+        "critique": false,
+        "graph": true
+      },
+      "agents": {
+        "critique_agent": null,
+        "graph_agent": null
+      },
+      "result": {
+        "error": 0,
+        "warning": 11,
+        "info": 1,
+        "valid": true
+      },
+      "exit_code": 0
+    },
+    {
+      "timestamp_utc": "2026-06-29T04:27:53Z",
+      "skillcheck_version": "1.3.0",
+      "skill_content_hash": "3aa41cdb6bd695b2",
+      "validation_modes": {
+        "symbolic": true,
+        "critique": false,
+        "graph": true
+      },
+      "agents": {
+        "critique_agent": null,
+        "graph_agent": null
+      },
+      "result": {
+        "error": 0,
+        "warning": 0,
+        "info": 1,
+        "valid": true
+      },
+      "exit_code": 0
+    },
+    {
+      "timestamp_utc": "2026-06-29T04:28:21Z",
+      "skillcheck_version": "1.3.0",
+      "skill_content_hash": "aa99514bd53d4540",
+      "validation_modes": {
+        "symbolic": true,
+        "critique": false,
+        "graph": true
+      },
+      "agents": {
+        "critique_agent": null,
+        "graph_agent": null
+      },
+      "result": {
+        "error": 0,
+        "warning": 0,
+        "info": 1,
+        "valid": true
+      },
+      "exit_code": 0
+    },
+    {
+      "timestamp_utc": "2026-06-29T05:06:11Z",
+      "skillcheck_version": "1.3.0",
+      "skill_content_hash": "aa99514bd53d4540",
+      "validation_modes": {
+        "symbolic": true,
+        "critique": false,
+        "graph": true
+      },
+      "agents": {
+        "critique_agent": null,
+        "graph_agent": null
+      },
+      "result": {
+        "error": 0,
+        "warning": 0,
+        "info": 1,
+        "valid": true
+      },
+      "exit_code": 0
+    }
+  ]
+}

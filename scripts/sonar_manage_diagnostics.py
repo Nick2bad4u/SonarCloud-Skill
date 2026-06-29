@@ -1,22 +1,28 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from sonar_manage_api import (
-    ProjectContext,
     RequestSpec,
     SonarCliError,
     api_request,
     parse_properties,
+    require_json_object,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from sonar_manage_api import ProjectContext
+
+type JsonObject = dict[str, Any]
 
 TS_CONFIG_SETTING_KEY = "sonar.typescript.tsconfigPaths"
 DEFAULT_PROJECT_ANALYSES_PAGE_SIZE = 5
 
 
-def fetch_ce_component(*, context: ProjectContext, component: str) -> dict[str, Any]:
+def fetch_ce_component(*, context: ProjectContext, component: str) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -25,12 +31,10 @@ def fetch_ce_component(*, context: ProjectContext, component: str) -> dict[str, 
             query={"component": component},
         ),
     )
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected CE component payload.")
-    return payload
+    return require_json_object(payload, "Unexpected CE component payload.")
 
 
-def fetch_ce_task(*, context: ProjectContext, task_id: str) -> dict[str, Any]:
+def fetch_ce_task(*, context: ProjectContext, task_id: str) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -39,9 +43,7 @@ def fetch_ce_task(*, context: ProjectContext, task_id: str) -> dict[str, Any]:
             query={"id": task_id},
         ),
     )
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected CE task payload.")
-    return payload
+    return require_json_object(payload, "Unexpected CE task payload.")
 
 
 def fetch_project_analyses(
@@ -50,7 +52,7 @@ def fetch_project_analyses(
     project_key: str,
     page: int,
     page_size: int,
-) -> dict[str, Any]:
+) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -63,12 +65,10 @@ def fetch_project_analyses(
             },
         ),
     )
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected project analyses payload.")
-    return payload
+    return require_json_object(payload, "Unexpected project analyses payload.")
 
 
-def investigate_tsconfig_warning(*, context: ProjectContext) -> dict[str, Any]:
+def investigate_tsconfig_warning(*, context: ProjectContext) -> JsonObject:
     settings_payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -90,28 +90,24 @@ def investigate_tsconfig_warning(*, context: ProjectContext) -> dict[str, Any]:
     local_scan = scan_local_tsconfigs(context.repo_root)
     local_root_candidates = list_root_tsconfig_candidates(context.repo_root)
     sonar_properties = (
-        parse_properties(context.sonar_properties_path)
-        if context.sonar_properties_path is not None
-        else {}
+        parse_properties(context.sonar_properties_path) if context.sonar_properties_path is not None else {}
     )
 
     ce_task_payload = None
-    last_task = (
-        ce_component.get("current")
-        or ce_component.get("queue")
-        or ce_component.get("task")
-    )
+    last_task = ce_component.get("current") or ce_component.get("queue") or ce_component.get("task")
     if isinstance(last_task, dict):
-        task_id = last_task.get("id")
+        last_task_object = cast("JsonObject", last_task)
+        task_id = last_task_object.get("id")
         if isinstance(task_id, str) and task_id:
             try:
                 ce_task_payload = fetch_ce_task(context=context, task_id=task_id)
             except SonarCliError:
                 ce_task_payload = None
 
+    settings_object = cast("JsonObject", settings_payload) if isinstance(settings_payload, dict) else {}
     suggestions = build_tsconfig_warning_suggestions(
         context=context,
-        settings_payload=settings_payload if isinstance(settings_payload, dict) else {},
+        settings_payload=settings_object,
         sonar_properties=sonar_properties,
         local_scan=local_scan,
         local_root_candidates=local_root_candidates,
@@ -129,14 +125,25 @@ def investigate_tsconfig_warning(*, context: ProjectContext) -> dict[str, Any]:
         "rootTsconfigCandidates": local_root_candidates,
         "suggestions": suggestions,
         "limitations": [
-            "The public SonarCloud API surfaces task metadata, but it does not reliably expose full scanner logs for every analysis.",
-            "If the exact missing tsconfig path is not present in CE task metadata, you still need the scanner-side logs from CI or local analysis output.",
+            join_message(
+                "The public SonarCloud API surfaces task metadata, but it does",
+                "not reliably expose full scanner logs for every analysis.",
+            ),
+            join_message(
+                "If the exact missing tsconfig path is not present in CE task",
+                "metadata, you still need the scanner-side logs from CI or local",
+                "analysis output.",
+            ),
         ],
     }
 
 
-def scan_local_tsconfigs(repo_root: Path) -> list[dict[str, Any]]:
-    results: list[dict[str, Any]] = []
+def join_message(*parts: str) -> str:
+    return " ".join(parts)
+
+
+def scan_local_tsconfigs(repo_root: Path) -> list[JsonObject]:
+    results: list[JsonObject] = []
     for file_path in sorted(repo_root.rglob("tsconfig*.json")):
         relative_path = file_path.relative_to(repo_root).as_posix()
         if should_skip_tsconfig_path(relative_path):
@@ -147,13 +154,11 @@ def scan_local_tsconfigs(repo_root: Path) -> list[dict[str, Any]]:
     return results
 
 
-def describe_tsconfig(
-    repo_root: Path, file_path: Path, relative_path: str
-) -> dict[str, Any]:
-    item: dict[str, Any] = {"path": relative_path, "exists": True}
+def describe_tsconfig(repo_root: Path, file_path: Path, relative_path: str) -> JsonObject:
+    item: JsonObject = {"path": relative_path, "exists": True}
     try:
         payload = json.loads(file_path.read_text(encoding="utf8"))
-    except Exception as error:  # pragma: no cover - best effort reporting only
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:  # pragma: no cover - best effort reporting only
         item["parseError"] = str(error)
         return item
 
@@ -186,9 +191,7 @@ def classify_extends_values(
     return local_extends, missing_local_extends, package_extends
 
 
-def add_if_present(
-    target: dict[str, Any], key: str, values: list[str]
-) -> None:
+def add_if_present(target: JsonObject, key: str, values: list[str]) -> None:
     if values:
         target[key] = values
 
@@ -214,7 +217,7 @@ def normalize_extends_values(raw_extends: Any) -> list[str]:
 
     if isinstance(raw_extends, list):
         values: list[str] = []
-        for item in raw_extends:
+        for item in cast("list[object]", raw_extends):
             if isinstance(item, str):
                 stripped = item.strip()
                 if stripped:
@@ -255,7 +258,7 @@ def build_tsconfig_warning_suggestions(
     context: ProjectContext,
     settings_payload: dict[str, Any],
     sonar_properties: dict[str, str],
-    local_scan: list[dict[str, Any]],
+    local_scan: list[JsonObject],
     local_root_candidates: list[str],
 ) -> list[str]:
     suggestions: list[str] = []
@@ -264,16 +267,26 @@ def build_tsconfig_warning_suggestions(
     property_value = sonar_properties.get(TS_CONFIG_SETTING_KEY)
     if property_value:
         suggestions.append(
-            f"The repo already declares {TS_CONFIG_SETTING_KEY}={property_value}. If warnings persist, the current Sonar analysis is likely stale."
+            join_message(
+                f"The repo already declares {TS_CONFIG_SETTING_KEY}={property_value}.",
+                "If warnings persist, the current Sonar analysis is likely stale.",
+            )
         )
     elif configured_setting:
         suggestions.append(
-            f"Project settings currently override {TS_CONFIG_SETTING_KEY}={configured_setting}. Compare that with the repo-local sonar-project.properties value."
+            join_message(
+                "Project settings currently override",
+                f"{TS_CONFIG_SETTING_KEY}={configured_setting}.",
+                "Compare that with the repo-local sonar-project.properties value.",
+            )
         )
     elif local_root_candidates:
         suggestions.append(
-            "If Sonar keeps discovering unwanted tsconfig files, consider setting "
-            f"{TS_CONFIG_SETTING_KEY} to only the root configs: {', '.join(local_root_candidates)}."
+            join_message(
+                "If Sonar keeps discovering unwanted tsconfig files, consider setting",
+                f"{TS_CONFIG_SETTING_KEY} to only the root configs:",
+                ", ".join(local_root_candidates),
+            )
         )
 
     append_docs_workspace_suggestion(suggestions, local_scan)
@@ -283,32 +296,32 @@ def build_tsconfig_warning_suggestions(
 
     if not suggestions:
         suggestions.append(
-            "No obvious local tsconfig mismatch was detected. Check the latest scanner logs for the exact missing path and compare it with the local tsconfig graph."
+            join_message(
+                "No obvious local tsconfig mismatch was detected. Check the latest",
+                "scanner logs for the exact missing path and compare it with the",
+                "local tsconfig graph.",
+            )
         )
 
     return suggestions
 
 
-def find_setting_value(settings_payload: dict[str, Any], key: str) -> Any:
+def find_setting_value(settings_payload: JsonObject, key: str) -> Any:
     settings_entries = settings_payload.get("settings")
     if not isinstance(settings_entries, list):
         return None
 
-    for setting in settings_entries:
-        if isinstance(setting, dict) and setting.get("key") == key:
-            return setting.get("value")
+    for setting in cast("list[object]", settings_entries):
+        if isinstance(setting, dict):
+            setting_object = cast("JsonObject", setting)
+            if setting_object.get("key") == key:
+                return setting_object.get("value")
     return None
 
 
-def append_docs_workspace_suggestion(
-    suggestions: list[str], local_scan: list[dict[str, Any]]
-) -> None:
+def append_docs_workspace_suggestion(suggestions: list[str], local_scan: list[JsonObject]) -> None:
     docs_workspace_entry = next(
-        (
-            item
-            for item in local_scan
-            if item.get("path") == "docs/docusaurus/tsconfig.json"
-        ),
+        (item for item in local_scan if item.get("path") == "docs/docusaurus/tsconfig.json"),
         None,
     )
     if not isinstance(docs_workspace_entry, dict):
@@ -317,19 +330,27 @@ def append_docs_workspace_suggestion(
     package_extends = docs_workspace_entry.get("packageExtends")
     if isinstance(package_extends, list) and "@docusaurus/tsconfig" in package_extends:
         suggestions.append(
-            "The docs workspace tsconfig extends @docusaurus/tsconfig, which is not a repo-local file. If Sonar still scans docs, that workspace is the most likely source of the missing-tsconfig warning."
+            join_message(
+                "The docs workspace tsconfig extends @docusaurus/tsconfig, which",
+                "is not a repo-local file. If Sonar still scans docs, that",
+                "workspace is the most likely source of the missing-tsconfig warning.",
+            )
         )
 
 
-def append_exclusion_suggestions(
-    suggestions: list[str], sonar_properties: dict[str, str]
-) -> None:
+def append_exclusion_suggestions(suggestions: list[str], sonar_properties: dict[str, str]) -> None:
     exclusions = sonar_properties.get("sonar.exclusions", "")
     if "**/docs/**" in exclusions:
         suggestions.append(
-            "docs/** is already excluded in sonar-project.properties, so docs-related tsconfig warnings should disappear after a fresh analysis."
+            join_message(
+                "docs/** is already excluded in sonar-project.properties, so",
+                "docs-related tsconfig warnings should disappear after a fresh analysis.",
+            )
         )
     if "**/scripts/**" in exclusions and "**/benchmark/**" in exclusions:
         suggestions.append(
-            "scripts/** and benchmark/** are already excluded, so remaining warnings are less likely to come from repo tooling on the next analysis."
+            join_message(
+                "scripts/** and benchmark/** are already excluded, so remaining",
+                "warnings are less likely to come from repo tooling on the next analysis.",
+            )
         )

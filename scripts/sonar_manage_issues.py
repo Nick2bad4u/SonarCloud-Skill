@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any, cast
 
 from sonar_manage_api import (
-    ProjectContext,
     RequestSpec,
     SonarCliError,
     api_request,
     drop_none_values,
+    require_json_object,
 )
 from sonar_manage_common import (
     build_dry_run_payload,
@@ -15,6 +15,13 @@ from sonar_manage_common import (
     extract_issue_state,
     normalize_keys,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from sonar_manage_api import ProjectContext
+
+type JsonObject = dict[str, Any]
 
 ISSUES_SEARCH_ENDPOINT = "/api/issues/search"
 
@@ -26,7 +33,7 @@ def fetch_issues(
     page: int,
     page_size: int,
     extra_query: dict[str, str] | None,
-) -> dict[str, Any]:
+) -> JsonObject:
     query = {
         "componentKeys": context.project_key,
         "statuses": issue_statuses,
@@ -47,13 +54,10 @@ def fetch_issues(
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected Sonar issues payload.")
-
-    return payload
+    return require_json_object(payload, "Unexpected Sonar issues payload.")
 
 
-def fetch_issue_changelog(*, context: ProjectContext, issue_key: str) -> dict[str, Any]:
+def fetch_issue_changelog(*, context: ProjectContext, issue_key: str) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -63,10 +67,10 @@ def fetch_issue_changelog(*, context: ProjectContext, issue_key: str) -> dict[st
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError(f"Unexpected issue changelog payload for {issue_key}.")
-
-    return payload
+    return require_json_object(
+        payload,
+        f"Unexpected issue changelog payload for {issue_key}.",
+    )
 
 
 def add_issue_comment(
@@ -75,7 +79,7 @@ def add_issue_comment(
     issue_key: str,
     text: str,
     dry_run: bool,
-) -> dict[str, Any]:
+) -> JsonObject:
     if not text.strip():
         raise SonarCliError("--text must not be empty.")
 
@@ -110,7 +114,7 @@ def assign_issue(
     issue_key: str,
     assignee: str,
     dry_run: bool,
-) -> dict[str, Any]:
+) -> JsonObject:
     request_spec = RequestSpec(
         method="POST",
         endpoint="/api/issues/assign",
@@ -145,7 +149,7 @@ def set_issue_tags(
     issue_key: str,
     tags: list[str],
     dry_run: bool,
-) -> dict[str, Any]:
+) -> JsonObject:
     request_spec = RequestSpec(
         method="POST",
         endpoint="/api/issues/set_tags",
@@ -181,22 +185,21 @@ def transition_issues(
     transition: str,
     comment: str | None,
     dry_run: bool,
-) -> dict[str, Any]:
+) -> JsonObject:
     normalized_transition = transition.strip()
     if not normalized_transition:
         raise SonarCliError("--transition must not be empty.")
 
-    results: list[dict[str, Any]] = []
-    for issue_key in normalize_keys(issue_keys, argument_name="issue"):
-        results.append(
-            transition_one_issue(
-                context=context,
-                issue_key=issue_key,
-                transition=normalized_transition,
-                comment=comment,
-                dry_run=dry_run,
-            )
+    results = [
+        transition_one_issue(
+            context=context,
+            issue_key=issue_key,
+            transition=normalized_transition,
+            comment=comment,
+            dry_run=dry_run,
         )
+        for issue_key in normalize_keys(issue_keys, argument_name="issue")
+    ]
 
     return {
         "projectKey": context.project_key,
@@ -213,7 +216,7 @@ def transition_one_issue(
     transition: str,
     comment: str | None,
     dry_run: bool,
-) -> dict[str, Any]:
+) -> JsonObject:
     request_spec = RequestSpec(
         method="POST",
         endpoint="/api/issues/do_transition",
@@ -252,7 +255,7 @@ def fetch_hotspots(
     page_size: int,
     include_details: bool,
     extra_query: dict[str, str] | None,
-) -> dict[str, Any]:
+) -> JsonObject:
     query = {
         "projectKey": context.project_key,
         "status": hotspot_status,
@@ -270,54 +273,46 @@ def fetch_hotspots(
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError("Unexpected Sonar hotspots payload.")
+    hotspot_payload = require_json_object(payload, "Unexpected Sonar hotspots payload.")
 
     if include_details:
-        payload = {
-            **payload,
+        hotspot_payload = {
+            **hotspot_payload,
             "details": fetch_hotspot_details(
                 context=context,
-                hotspots=payload.get("hotspots", []),
+                hotspots=hotspot_payload.get("hotspots", []),
             ),
         }
 
-    return payload
+    return hotspot_payload
 
 
-def fetch_hotspot_details(
-    *, context: ProjectContext, hotspots: Any
-) -> list[dict[str, Any]]:
+def fetch_hotspot_details(*, context: ProjectContext, hotspots: Any) -> list[JsonObject]:
     if not isinstance(hotspots, list):
         return []
 
     return [
         fetch_hotspot_detail(context=context, hotspot_key=hotspot_key)
-        for hotspot_key in hotspot_keys_from_items(hotspots)
+        for hotspot_key in hotspot_keys_from_items(cast("list[object]", hotspots))
     ]
 
 
-def hotspot_keys_from_items(hotspots: list[Any]) -> list[str]:
-    return [
-        hotspot_key
-        for hotspot in hotspots
-        if (hotspot_key := hotspot_key_from_item(hotspot)) is not None
-    ]
+def hotspot_keys_from_items(hotspots: list[object]) -> list[str]:
+    return [hotspot_key for hotspot in hotspots if (hotspot_key := hotspot_key_from_item(hotspot)) is not None]
 
 
 def hotspot_key_from_item(hotspot: Any) -> str | None:
     if not isinstance(hotspot, dict):
         return None
 
-    hotspot_key = hotspot.get("key")
+    hotspot_object = cast("JsonObject", hotspot)
+    hotspot_key = hotspot_object.get("key")
     if isinstance(hotspot_key, str) and hotspot_key:
         return hotspot_key
     return None
 
 
-def fetch_hotspot_detail(
-    *, context: ProjectContext, hotspot_key: str
-) -> dict[str, Any]:
+def fetch_hotspot_detail(*, context: ProjectContext, hotspot_key: str) -> JsonObject:
     payload = api_request(
         context=context,
         spec=RequestSpec(
@@ -327,10 +322,10 @@ def fetch_hotspot_detail(
         ),
     )
 
-    if not isinstance(payload, dict):
-        raise SonarCliError(f"Unexpected hotspot detail payload for {hotspot_key}.")
-
-    return payload
+    return require_json_object(
+        payload,
+        f"Unexpected hotspot detail payload for {hotspot_key}.",
+    )
 
 
 def review_hotspots(
@@ -341,7 +336,7 @@ def review_hotspots(
     resolution: str,
     comment: str | None,
     dry_run: bool,
-) -> dict[str, Any]:
+) -> JsonObject:
     normalized_status = status.strip()
     normalized_resolution = resolution.strip()
     if not normalized_status:
@@ -349,7 +344,7 @@ def review_hotspots(
     if not normalized_resolution:
         raise SonarCliError("--resolution must not be empty.")
 
-    results: list[dict[str, Any]] = []
+    results: list[JsonObject] = []
     for hotspot_key in normalize_keys(hotspot_keys, argument_name="hotspot"):
         request_spec = RequestSpec(
             method="POST",

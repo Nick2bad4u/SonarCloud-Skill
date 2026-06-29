@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
+import sys
+from typing import Any, cast
+
+type JsonObject = dict[str, Any]
 
 UNTRUSTED_CONTENT_WARNING = (
     "Untrusted external content from Sonar API responses is marked as "
@@ -38,21 +41,26 @@ def emit_output(payload: Any, *, as_json: bool) -> None:
     safe_payload = mark_untrusted_payload(payload)
 
     if as_json:
-        print(json.dumps(safe_payload, indent=2))
+        write_stdout(json.dumps(safe_payload, indent=2))
         return
 
     if not isinstance(safe_payload, dict):
-        print(safe_payload)
+        write_stdout(str(safe_payload))
         return
 
-    print(render_text(safe_payload))
+    write_stdout(render_text(cast("JsonObject", safe_payload)))
+
+
+def write_stdout(value: str) -> None:
+    _ = sys.stdout.write(f"{value}\n")
 
 
 def mark_untrusted_payload(payload: Any, *, key: str | None = None) -> Any:
     if isinstance(payload, dict):
-        marked = {
+        payload_object = cast("JsonObject", payload)
+        marked: JsonObject = {
             item_key: mark_untrusted_payload(item_value, key=item_key)
-            for item_key, item_value in payload.items()
+            for item_key, item_value in payload_object.items()
         }
         if key is None:
             marked.setdefault(
@@ -60,14 +68,16 @@ def mark_untrusted_payload(payload: Any, *, key: str | None = None) -> Any:
                 {},
             )
             if isinstance(marked["_meta"], dict):
-                marked["_meta"].setdefault(
+                metadata = cast("JsonObject", marked["_meta"])
+                metadata.setdefault(
                     "untrustedContentWarning",
                     UNTRUSTED_CONTENT_WARNING,
                 )
         return marked
 
     if isinstance(payload, list):
-        return [mark_untrusted_payload(item, key=key) for item in payload]
+        payload_items = cast("list[object]", payload)
+        return [mark_untrusted_payload(item, key=key) for item in payload_items]
 
     if isinstance(payload, str) and key in UNTRUSTED_TEXT_KEYS:
         return mark_untrusted_text(payload)
@@ -82,7 +92,7 @@ def mark_untrusted_text(value: str) -> str:
     return f"[untrusted-sonar-text] {cleaned}"
 
 
-def render_text(payload: dict[str, Any]) -> str:
+def render_text(payload: JsonObject) -> str:
     lines: list[str] = []
 
     append_untrusted_content_warning(lines, payload)
@@ -129,17 +139,18 @@ def render_text(payload: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def append_untrusted_content_warning(lines: list[str], payload: dict[str, Any]) -> None:
+def append_untrusted_content_warning(lines: list[str], payload: JsonObject) -> None:
     metadata = payload.get("_meta")
     if not isinstance(metadata, dict):
         return
 
-    warning = metadata.get("untrustedContentWarning")
+    metadata_object = cast("JsonObject", metadata)
+    warning = metadata_object.get("untrustedContentWarning")
     if isinstance(warning, str) and warning:
         lines.append(warning)
 
 
-def append_context_fields(lines: list[str], payload: dict[str, Any]) -> None:
+def append_context_fields(lines: list[str], payload: JsonObject) -> None:
     for label, key in (
         ("Project", "projectKey"),
         ("Repo", "repoRoot"),
@@ -163,49 +174,60 @@ def append_sample_section(
     if not isinstance(section, dict):
         return
 
-    lines.append(f"{count_label}: {section.get('total', 0)}")
-    sample = section.get("sample")
+    section_object = cast("JsonObject", section)
+    lines.append(f"{count_label}: {section_object.get('total', 0)}")
+    sample = section_object.get("sample")
     if isinstance(sample, list) and sample:
         lines.append(sample_label)
-        lines.extend(format_sample_items(sample, key_field="key"))
+        lines.extend(format_sample_items(cast("list[object]", sample), key_field="key"))
 
 
-def append_quality_gate_status(lines: list[str], payload: dict[str, Any]) -> None:
+def append_quality_gate_status(lines: list[str], payload: JsonObject) -> None:
     quality_gate_status = payload.get("qualityGateStatus")
     if not isinstance(quality_gate_status, dict):
         return
 
-    project_status = quality_gate_status.get("projectStatus")
-    if isinstance(project_status, dict) and isinstance(project_status.get("status"), str):
-        lines.append(f"Quality gate status: {project_status['status']}")
+    quality_gate_status_object = cast("JsonObject", quality_gate_status)
+    project_status = quality_gate_status_object.get("projectStatus")
+    if not isinstance(project_status, dict):
+        return
+
+    project_status_object = cast("JsonObject", project_status)
+    status = project_status_object.get("status")
+    if isinstance(status, str):
+        lines.append(f"Quality gate status: {status}")
 
 
-def append_quality_gate(lines: list[str], payload: dict[str, Any]) -> None:
+def append_quality_gate(lines: list[str], payload: JsonObject) -> None:
     quality_gate = payload.get("qualityGate")
     if not isinstance(quality_gate, dict):
         return
 
-    name = payload.get("name") or quality_gate.get("name")
-    nested = quality_gate.get("qualityGate")
+    quality_gate_object = cast("JsonObject", quality_gate)
+    name = payload.get("name") or quality_gate_object.get("name")
+    nested = quality_gate_object.get("qualityGate")
     if not isinstance(name, str) and isinstance(nested, dict):
-        name = nested.get("name")
+        nested_object = cast("JsonObject", nested)
+        name = nested_object.get("name")
     if isinstance(name, str) and name:
         lines.append(f"Quality gate: {name}")
 
 
-def append_measures(lines: list[str], payload: dict[str, Any]) -> None:
+def append_measures(lines: list[str], payload: JsonObject) -> None:
     measures = payload.get("measures")
     if not isinstance(measures, dict):
         return
 
-    component = measures.get("component")
+    measures_object = cast("JsonObject", measures)
+    component = measures_object.get("component")
     if not isinstance(component, dict):
         return
 
-    raw_measures = component.get("measures")
+    component_object = cast("JsonObject", component)
+    raw_measures = component_object.get("measures")
     if isinstance(raw_measures, list):
         lines.append("Measures:")
-        lines.extend(format_sample_items(raw_measures, key_field="metric"))
+        lines.extend(format_sample_items(cast("list[object]", raw_measures), key_field="metric"))
 
 
 def append_list_section(
@@ -220,22 +242,24 @@ def append_list_section(
     if not isinstance(items, list) or (skip_empty and not items):
         return
 
-    lines.append(heading or f"{heading_prefix}: {len(items)}")
-    lines.extend(format_sample_items(items, key_field=key_field))
+    item_list = cast("list[object]", items)
+    lines.append(heading or f"{heading_prefix}: {len(item_list)}")
+    lines.extend(format_sample_items(item_list, key_field=key_field))
 
 
-def format_sample_items(items: list[Any], *, key_field: str | None) -> list[str]:
+def format_sample_items(items: list[object], *, key_field: str | None) -> list[str]:
     return [format_sample_item(item, key_field=key_field) for item in items]
 
 
-def format_sample_item(item: Any, *, key_field: str | None) -> str:
+def format_sample_item(item: object, *, key_field: str | None) -> str:
     if not isinstance(item, dict):
         return f"- {item}"
 
-    return f"- {format_item_identifier(item, key_field)}{' | '.join(format_item_details(item))}"
+    item_object = cast("JsonObject", item)
+    return f"- {format_item_identifier(item_object, key_field)}{' | '.join(format_item_details(item_object))}"
 
 
-def format_item_identifier(item: dict[str, Any], key_field: str | None) -> str:
+def format_item_identifier(item: JsonObject, key_field: str | None) -> str:
     if key_field is None:
         return ""
 
@@ -245,7 +269,7 @@ def format_item_identifier(item: dict[str, Any], key_field: str | None) -> str:
     return ""
 
 
-def format_item_details(item: dict[str, Any]) -> list[str]:
+def format_item_details(item: JsonObject) -> list[str]:
     detail_parts: list[str] = []
     for candidate_key in (
         "status",
