@@ -1,11 +1,10 @@
 from __future__ import annotations
-# pyright: reportUnusedCallResult=false
 
+# pyright: reportUnusedCallResult=false
 from pathlib import Path
 from typing import Any
 
 import pytest
-
 import sonar_manage_project
 from sonar_manage_api import ProjectContext, RequestSpec, SonarCliError
 
@@ -37,26 +36,38 @@ def test_fetch_project_payloads_call_expected_endpoints(
     monkeypatch.setattr(sonar_manage_project, "api_request", fake_api_request)
     context = make_context(tmp_path)
 
-    assert sonar_manage_project.fetch_measures(
-        context=context,
-        component="component",
-        metrics=["coverage", "bugs"],
-    )["endpoint"] == "/api/measures/component"
-    assert sonar_manage_project.fetch_measure_history(
-        context=context,
-        component="component",
-        metrics=["coverage"],
-        from_date="2026-01-01",
-        to_date=None,
-    )["endpoint"] == "/api/measures/search_history"
-    assert sonar_manage_project.fetch_project_component_info(
-        context=context,
-        component="component",
-    )["endpoint"] == "/api/components/show"
-    assert sonar_manage_project.fetch_quality_gate_status(
-        context=context,
-        project_key="project-key",
-    )["endpoint"] == "/api/qualitygates/project_status"
+    assert (
+        sonar_manage_project.fetch_measures(
+            context=context,
+            component="component",
+            metrics=["coverage", "bugs"],
+        )["endpoint"]
+        == "/api/measures/component"
+    )
+    assert (
+        sonar_manage_project.fetch_measure_history(
+            context=context,
+            component="component",
+            metrics=["coverage"],
+            from_date="2026-01-01",
+            to_date=None,
+        )["endpoint"]
+        == "/api/measures/search_history"
+    )
+    assert (
+        sonar_manage_project.fetch_project_component_info(
+            context=context,
+            component="component",
+        )["endpoint"]
+        == "/api/components/show"
+    )
+    assert (
+        sonar_manage_project.fetch_quality_gate_status(
+            context=context,
+            project_key="project-key",
+        )["endpoint"]
+        == "/api/qualitygates/project_status"
+    )
     assert sonar_manage_project.list_quality_gates(context=context)["query"] == {
         "organization": "org-key",
     }
@@ -67,18 +78,24 @@ def test_fetch_project_payloads_call_expected_endpoints(
 def test_quality_gate_and_settings_mutations_support_dry_run(tmp_path: Path) -> None:
     context = make_context(tmp_path)
 
-    assert sonar_manage_project.set_quality_gate(
-        context=context,
-        project_key="project-key",
-        gate_id="42",
-        gate_name=None,
-        dry_run=True,
-    )["result"]["endpoint"] == "/api/qualitygates/select"
-    assert sonar_manage_project.unset_quality_gate(
-        context=context,
-        project_key="project-key",
-        dry_run=True,
-    )["result"]["endpoint"] == "/api/qualitygates/deselect"
+    assert (
+        sonar_manage_project.set_quality_gate(
+            context=context,
+            project_key="project-key",
+            gate_id="42",
+            gate_name=None,
+            dry_run=True,
+        )["result"]["endpoint"]
+        == "/api/qualitygates/select"
+    )
+    assert (
+        sonar_manage_project.unset_quality_gate(
+            context=context,
+            project_key="project-key",
+            dry_run=True,
+        )["result"]["endpoint"]
+        == "/api/qualitygates/deselect"
+    )
     assert sonar_manage_project.set_setting_value(
         context=context,
         component="project-key",
@@ -91,12 +108,15 @@ def test_quality_gate_and_settings_mutations_support_dry_run(tmp_path: Path) -> 
         "key": "sonar.exclusions",
         "value": "docs/**",
     }
-    assert sonar_manage_project.reset_setting_value(
-        context=context,
-        component="project-key",
-        key="sonar.exclusions",
-        dry_run=True,
-    )["result"]["endpoint"] == "/api/settings/reset"
+    assert (
+        sonar_manage_project.reset_setting_value(
+            context=context,
+            component="project-key",
+            key="sonar.exclusions",
+            dry_run=True,
+        )["result"]["endpoint"]
+        == "/api/settings/reset"
+    )
 
 
 def test_quality_gate_name_resolution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -112,11 +132,14 @@ def test_quality_gate_name_resolution(tmp_path: Path, monkeypatch: pytest.Monkey
         fake_list_quality_gates,
     )
 
-    assert sonar_manage_project.resolve_quality_gate_id(
-        context=context,
-        gate_id=None,
-        gate_name="Sonar way",
-    ) == "7"
+    assert (
+        sonar_manage_project.resolve_quality_gate_id(
+            context=context,
+            gate_id=None,
+            gate_name="Sonar way",
+        )
+        == "7"
+    )
 
     with pytest.raises(SonarCliError, match="Either --gate-id"):
         sonar_manage_project.resolve_quality_gate_id(

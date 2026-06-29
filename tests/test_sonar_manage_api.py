@@ -1,15 +1,14 @@
 from __future__ import annotations
-# pyright: reportUnusedCallResult=false
 
+# pyright: reportUnusedCallResult=false
 import io
 from email.message import Message
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, Self
 from urllib import error, request
 
 import pytest
-
 import sonar_manage_api
 
 
@@ -144,7 +143,7 @@ def test_api_request_auto_falls_back_to_basic(monkeypatch: pytest.MonkeyPatch, t
 
 def test_api_request_once_builds_json_request(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     class Response:
-        def __enter__(self) -> Response:
+        def __enter__(self) -> Self:
             return self
 
         def __exit__(self, *args: object) -> None:

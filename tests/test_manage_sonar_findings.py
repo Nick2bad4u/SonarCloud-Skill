@@ -1,12 +1,11 @@
 from __future__ import annotations
-# pyright: reportUnusedCallResult=false
 
+# pyright: reportUnusedCallResult=false
 import argparse
 from pathlib import Path
 
-import pytest
-
 import manage_sonar_findings
+import pytest
 from sonar_manage_api import ProjectContext, SonarCliError
 
 

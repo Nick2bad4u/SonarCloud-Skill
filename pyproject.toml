@@ -89,7 +89,14 @@
                 "PLR0913"        # Text rendering section options are clearer as named parameters.
             ]
             "tests/**/*.py" = [
-                "S101"           # pytest uses assert rewriting.
+                "D100",          # Test modules are named by behavior and do not need module docstrings.
+                "D103",          # Test function names describe the behavior under test.
+                "PLR2004",       # Literal expectations are clearer than constants in focused tests.
+                "TC002",         # Test annotations can keep pytest and helper imports readable.
+                "TC003",         # Test annotations can keep pathlib and helper imports readable.
+                "S101",          # pytest uses assert rewriting.
+                "S105",          # Tests use fake token strings to exercise token plumbing.
+                "S106"           # Tests use fake token strings to exercise token plumbing.
             ]
 
 [tool.mypy]

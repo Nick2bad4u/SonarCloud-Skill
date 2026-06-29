@@ -1,11 +1,10 @@
 from __future__ import annotations
-# pyright: reportUnusedCallResult=false
 
+# pyright: reportUnusedCallResult=false
 from pathlib import Path
 from typing import Any
 
 import pytest
-
 import sonar_manage_diagnostics
 from sonar_manage_api import ProjectContext, RequestSpec
 

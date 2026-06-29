@@ -1,10 +1,9 @@
 from __future__ import annotations
-# pyright: reportUnusedCallResult=false
 
+# pyright: reportUnusedCallResult=false
 from pathlib import Path
 
 import pytest
-
 from sonar_manage_api import ProjectContext, RequestSpec, SonarCliError
 from sonar_manage_common import (
     build_dry_run_payload,
@@ -111,8 +110,11 @@ def test_build_dry_run_payload(tmp_path: Path) -> None:
         "form": {"key": "value"},
         "dryRun": True,
     }
-    assert build_dry_run_payload(
-        context=make_context(tmp_path),
-        description="Set setting",
-        request_spec=request_spec,
-    )["projectKey"] == "project-key"
+    assert (
+        build_dry_run_payload(
+            context=make_context(tmp_path),
+            description="Set setting",
+            request_spec=request_spec,
+        )["projectKey"]
+        == "project-key"
+    )
