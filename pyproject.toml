@@ -305,7 +305,7 @@
     addopts                    = [
         "-p",
         "no:xonsh",
-        "--basetemp=.cache/pytest-tmp",
+        "--basetemp=.pytest-tmp",
         "--strict-config",
         "--strict-markers",
         "--import-mode=importlib",
