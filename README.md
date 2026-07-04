@@ -6,7 +6,7 @@ An open-agent skill for inspecting and managing **SonarCloud** and **SonarQube**
 
 This repository provides:
 
-- a reusable `sonar-manage-findings` skill (`SKILL.md`)
+- a reusable `sonar-manage-findings` skill (`skills/sonar-manage-findings/SKILL.md`)
 - a Python CLI helper to query and triage project findings
 - GitHub automation for security/scanning hygiene
 
@@ -31,20 +31,25 @@ With a Sonar token in an environment variable, you can:
 ## Repository layout
 
 ```text
-SKILL.md
-agents/
-  openai.yaml
-assets/
-  sonar-manage-findings-small.svg
-  sonar-manage-findings.png
-scripts/
-  manage_sonar_findings.py
-  sonar_manage_api.py
-  sonar_manage_common.py
-  sonar_manage_diagnostics.py
-  sonar_manage_issues.py
-  sonar_manage_project.py
-  sonar_manage_render.py
+skills/
+  sonar-manage-findings/
+    SKILL.md
+    LICENSE.txt
+    agents/
+      openai.yaml
+    assets/
+      sonar-manage-findings-small.svg
+      sonar-manage-findings.png
+    references/
+      command-guide.md
+    scripts/
+      manage_sonar_findings.py
+      sonar_manage_api.py
+      sonar_manage_common.py
+      sonar_manage_diagnostics.py
+      sonar_manage_issues.py
+      sonar_manage_project.py
+      sonar_manage_render.py
 README.md
 CONTRIBUTING.md
 SECURITY.md
@@ -55,7 +60,7 @@ CHANGELOG.md
 
 ## Agent compatibility
 
-This is a root `SKILL.md` package. `npx skills` can install it directly from GitHub, and `npx skills experimental_sync` can discover it from `node_modules` because the npm package ships `SKILL.md` at the package root.
+This package uses the `skills/sonar-manage-findings/` layout so `npx skills` can discover the full skill payload, including its `agents/`, `assets/`, `references/`, and `scripts/` folders.
 
 Use `--agent universal` for agents that consume the shared `.agents/skills` layout. Use `--agent "*"` only when you intentionally want to install to every supported agent directory.
 
@@ -66,7 +71,7 @@ npm install --save-dev sonar-manage-findings-skill
 npx skills experimental_sync --agent universal -y
 ```
 
-OpenAI-specific display metadata lives in `agents/openai.yaml`. The portable skill contract is `SKILL.md` plus the referenced `assets/` and `scripts/` files.
+OpenAI-specific display metadata lives in `skills/sonar-manage-findings/agents/openai.yaml`. The portable skill contract is `skills/sonar-manage-findings/SKILL.md` plus the referenced `assets/`, `references/`, and `scripts/` files.
 
 ---
 
@@ -111,13 +116,13 @@ export SONAR_TOKEN="<your-token>"
 From repository root:
 
 ```powershell
-python "scripts/manage_sonar_findings.py" summary --repo "."
+python "skills/sonar-manage-findings/scripts/manage_sonar_findings.py" summary --repo "."
 ```
 
 Machine-readable output:
 
 ```powershell
-python "scripts/manage_sonar_findings.py" summary --repo "." --json
+python "skills/sonar-manage-findings/scripts/manage_sonar_findings.py" summary --repo "." --json
 ```
 
 ---
@@ -126,24 +131,24 @@ python "scripts/manage_sonar_findings.py" summary --repo "." --json
 
 ```powershell
 # List open/reopened issues
-python "scripts/manage_sonar_findings.py" list-issues --repo "." --issue-statuses OPEN,CONFIRMED,REOPENED
+python "skills/sonar-manage-findings/scripts/manage_sonar_findings.py" list-issues --repo "." --issue-statuses OPEN,CONFIRMED,REOPENED
 
 # Show issue activity
-python "scripts/manage_sonar_findings.py" issue-changelog --repo "." --issue AZ123
+python "skills/sonar-manage-findings/scripts/manage_sonar_findings.py" issue-changelog --repo "." --issue AZ123
 
 # Resolve an issue (dry-run first)
-python "scripts/manage_sonar_findings.py" transition-issue --repo "." --issue AZ123 --transition resolve --comment "Fixed in code." --dry-run
+python "skills/sonar-manage-findings/scripts/manage_sonar_findings.py" transition-issue --repo "." --issue AZ123 --transition resolve --comment "Fixed in code." --dry-run
 
 # List hotspots awaiting review
-python "scripts/manage_sonar_findings.py" list-hotspots --repo "." --hotspot-status TO_REVIEW --include-details
+python "skills/sonar-manage-findings/scripts/manage_sonar_findings.py" list-hotspots --repo "." --hotspot-status TO_REVIEW --include-details
 
 # Check quality gate
-python "scripts/manage_sonar_findings.py" quality-gate-status --repo "."
+python "skills/sonar-manage-findings/scripts/manage_sonar_findings.py" quality-gate-status --repo "."
 ```
 
 For the full command surface and workflows, see:
 
-- `SKILL.md`
+- `skills/sonar-manage-findings/SKILL.md`
 
 ---
 

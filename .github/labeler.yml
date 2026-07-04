@@ -62,7 +62,7 @@ build:
                       - "dist/**/*"
                       - "plugin.mjs"
                       - "plugin.d.mts"
-                      - "scripts/**/*"
+                      - "skills/sonar-manage-findings/scripts/**/*"
                       - "tsconfig.build.json"
                       - "vite.config.ts"
       - title:
@@ -204,6 +204,7 @@ testing:
                       - "**/*.test.{js,ts,tsx}"
                       - "**/*.spec.{js,ts,tsx}"
                       - "test/**/*"
+                      - "tests/**/*"
                       - "__tests__/**/*"
       - title:
               - pattern: "(?i)test"

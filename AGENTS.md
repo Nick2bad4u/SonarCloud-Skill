@@ -10,10 +10,10 @@ This repository packages the `sonar-manage-findings` Codex/open-agent skill. Kee
 
 ## Scope
 
-- Treat `SKILL.md` as the user-facing skill entrypoint.
-- Treat `scripts/manage_sonar_findings.py` as the CLI entrypoint.
-- Keep helper modules in `scripts/` stdlib-only unless a dependency is explicitly justified and documented.
-- Keep `agents/openai.yaml`, `assets/`, and `LICENSE.txt` synchronized with the packaged skill.
+- Treat `skills/sonar-manage-findings/SKILL.md` as the user-facing skill entrypoint.
+- Treat `skills/sonar-manage-findings/scripts/manage_sonar_findings.py` as the CLI entrypoint.
+- Keep helper modules in `skills/sonar-manage-findings/scripts/` stdlib-only unless a dependency is explicitly justified and documented.
+- Keep `skills/sonar-manage-findings/agents/openai.yaml`, `skills/sonar-manage-findings/assets/`, and `skills/sonar-manage-findings/LICENSE.txt` synchronized with the packaged skill.
 
 ## Security
 
@@ -27,7 +27,7 @@ This repository packages the `sonar-manage-findings` Codex/open-agent skill. Kee
 Run the narrowest useful checks after edits:
 
 ```powershell
-python -m compileall scripts
+python -m compileall skills/sonar-manage-findings/scripts
 npm run release:verify
 ```
 

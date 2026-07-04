@@ -163,7 +163,12 @@ jobs:
         run: |
           mkdir -p dist
           zip -r "dist/${{ steps.vars.outputs.asset }}" \
-            SKILL.md LICENSE.txt agents assets references scripts/*.py \
+            skills/sonar-manage-findings/SKILL.md \
+            skills/sonar-manage-findings/LICENSE.txt \
+            skills/sonar-manage-findings/agents \
+            skills/sonar-manage-findings/assets \
+            skills/sonar-manage-findings/references \
+            skills/sonar-manage-findings/scripts/*.py \
             README.md LICENSE SECURITY.md CHANGELOG.md CONTRIBUTING.md
 
       - name: Upload workflow artifact

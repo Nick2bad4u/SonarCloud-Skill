@@ -19,8 +19,8 @@
 <!-- Include commands and outcomes. -->
 
 ```text
-python -m compileall scripts
-python scripts/manage_sonar_findings.py --help
+python -m compileall skills/sonar-manage-findings/scripts
+python skills/sonar-manage-findings/scripts/manage_sonar_findings.py --help
 ```
 
 ## Security / safety checklist

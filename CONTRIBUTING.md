@@ -22,8 +22,8 @@ python -m venv .venv
 From repo root, run:
 
 ```powershell
-python -m compileall "scripts"
-python "scripts/manage_sonar_findings.py" --help
+python -m compileall "skills/sonar-manage-findings/scripts"
+python "skills/sonar-manage-findings/scripts/manage_sonar_findings.py" --help
 ```
 
 If you touched command behavior, include example command invocations and expected output snippets in your PR description.

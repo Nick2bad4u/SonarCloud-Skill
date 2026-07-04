@@ -83,14 +83,14 @@ assert(
   pkg.repository?.url === "git+https://github.com/Nick2bad4u/SonarCloud-Skill.git",
   "repository.url must exactly match the GitHub repository for npm trusted publishing",
 );
-assert(skill.path === ".", "codexSkill.path must point at the repository root");
+assert(skill.path === "skills/sonar-manage-findings", "codexSkill.path must point at the packaged skill directory");
 for (const requiredFile of [
-  "SKILL.md",
-  "LICENSE.txt",
-  "agents/",
-  "assets/",
-  "references/",
-  "scripts/*.py",
+  "skills/sonar-manage-findings/SKILL.md",
+  "skills/sonar-manage-findings/LICENSE.txt",
+  "skills/sonar-manage-findings/agents/",
+  "skills/sonar-manage-findings/assets/",
+  "skills/sonar-manage-findings/references/",
+  "skills/sonar-manage-findings/scripts/*.py",
   "README.md",
   "CHANGELOG.md",
   "SECURITY.md",

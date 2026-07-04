@@ -31,12 +31,12 @@
     "zed"
   ],
   "files": [
-    "SKILL.md",
-    "LICENSE.txt",
-    "agents/",
-    "assets/",
-    "references/",
-    "scripts/*.py",
+    "skills/sonar-manage-findings/SKILL.md",
+    "skills/sonar-manage-findings/LICENSE.txt",
+    "skills/sonar-manage-findings/agents/",
+    "skills/sonar-manage-findings/assets/",
+    "skills/sonar-manage-findings/references/",
+    "skills/sonar-manage-findings/scripts/*.py",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "README.md",
@@ -56,7 +56,7 @@
     "ruff:fix:unsafe": "ruff check --fix --unsafe-fixes scripts tests",
     "check:python": "npm run lint:python && npm run typecheck:python && npm run test:python && npm run compile:python",
     "check:python:unsafe": "npm run lint:python:unsafe && npm run typecheck:python && npm run test:python && npm run compile:python",
-    "compile:python": "python -m compileall -q -x \"[\\\\/]\\.\" scripts tests",
+    "compile:python": "python -m compileall -q -x \"[\\\\/]\\.\" skills/sonar-manage-findings/scripts tests",
     "format:python": "npm run ruff:format && npm run ruff:fix",
     "lint:python": "npm run ruff:check && npm run ruff:format:check",
     "lint:python:unsafe": "npm run ruff:check:unsafe && npm run ruff:fix:unsafe",
@@ -65,17 +65,17 @@
     "python:venv": "python -m venv .venv && .venv\\Scripts\\activate && python -m pip install --upgrade pip && python -m pip install -r requirements-dev.txt",
     "python:venv:activate": ". .\\.venv\\Scripts\\Activate.ps1",
     "python:venv:deactivate": ". .\\.venv\\Scripts\\Deactivate.ps1",
-    "ruff:check": "ruff check scripts tests",
-    "ruff:fix": "ruff check --fix scripts tests",
-    "ruff:format": "ruff format scripts tests",
-    "ruff:format:check": "ruff format --check scripts tests",
+    "ruff:check": "ruff check skills/sonar-manage-findings/scripts tests",
+    "ruff:fix": "ruff check --fix skills/sonar-manage-findings/scripts tests",
+    "ruff:format": "ruff format skills/sonar-manage-findings/scripts tests",
+    "ruff:format:check": "ruff format --check skills/sonar-manage-findings/scripts tests",
     "test:python": "pytest",
     "typecheck:python": "mypy && pyright",
-    "skillcheck": "skillcheck --history SKILL.md  --fail-on-regression"
+    "skillcheck": "skillcheck skills/sonar-manage-findings/SKILL.md --history --fail-on-regression"
   },
   "codexSkill": {
     "name": "sonar-manage-findings",
-    "path": ".",
+    "path": "skills/sonar-manage-findings",
     "githubReleaseAssetPrefix": "sonarcloud-skill"
   }
 }
