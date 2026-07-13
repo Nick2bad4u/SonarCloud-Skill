@@ -1,20 +1,20 @@
 codecov:
-  max_report_age: 24h
+    max_report_age: "24h"
 
 coverage:
-  precision: 2
-  range: 75...100
-  round: down
-  status:
-    project:
-      default:
-        flags:
-          - python
-        target: 75%
-        threshold: 0%
-    patch:
-      default:
-        flags:
-          - python
-        target: 75%
-        threshold: 0%
+    precision: 2
+    range: "75...100"
+    round: "down"
+    status:
+        project:
+            default:
+                flags:
+                    - "python"
+                target: "75%"
+                threshold: "0%"
+        patch:
+            default:
+                flags:
+                    - "python"
+                target: "75%"
+                threshold: "0%"

@@ -1,7 +1,7 @@
 interface:
-  display_name: "Sonar Manage Findings"
-  short_description: "Inspect and triage Sonar findings"
-  icon_small: "./assets/sonar-manage-findings-small.svg"
-  icon_large: "./assets/sonar-manage-findings.png"
-  brand_color: "#4F46E5"
-  default_prompt: "Use $sonar-manage-findings to inspect SonarCloud or SonarQube findings, summarize risk, and apply safe triage actions."
+    display_name: "Sonar Manage Findings"
+    short_description: "Inspect and triage Sonar findings"
+    icon_small: "./assets/sonar-manage-findings-small.svg"
+    icon_large: "./assets/sonar-manage-findings.png"
+    brand_color: "#4F46E5"
+    default_prompt: "Use $sonar-manage-findings to inspect SonarCloud or SonarQube findings, summarize risk, and apply safe triage actions."

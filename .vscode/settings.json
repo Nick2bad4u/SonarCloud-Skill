@@ -1,8 +1,4 @@
 {
-    "sonarlint.connectedMode.project": {
-        "connectionId": "nick2bad4u",
-        "projectKey": "Nick2bad4u_SonarCloud-Skill"
-    },
     "[python]": {
         "editor.codeActionsOnSave": {
             "source.fixAll.ruff": "explicit",
@@ -21,13 +17,17 @@
     "python.testing.pytestArgs": [
         "tests"
     ],
-    "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
     "ruff.configurationPreference": "filesystemFirst",
     "ruff.fixAll": true,
     "ruff.format.backend": "internal",
     "ruff.importStrategy": "fromEnvironment",
     "ruff.lint.enable": true,
     "ruff.nativeServer": "auto",
-    "ruff.organizeImports": true
+    "ruff.organizeImports": true,
+    "sonarlint.connectedMode.project": {
+        "connectionId": "nick2bad4u",
+        "projectKey": "Nick2bad4u_SonarCloud-Skill"
+    }
 }

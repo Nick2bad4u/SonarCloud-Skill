@@ -3,7 +3,7 @@ name: "sonar-manage-findings"
 description: "Use this skill whenever the user needs SonarCloud or SonarQube issue and hotspot triage, measures, gates, profiles, settings, tags, or safe mutations with environment-variable tokens."
 license: "Unlicense"
 metadata:
-  short-description: "Inspect and triage Sonar findings"
+ short-description: "Inspect and triage Sonar findings"
 ---
 
 # Sonar Findings Management
