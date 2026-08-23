@@ -1,5 +1,5 @@
 codecov:
-    max_report_age: "24h"
+    max_report_age: false
 
 coverage:
     precision: 2
