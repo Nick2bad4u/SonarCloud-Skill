@@ -310,7 +310,7 @@
         "--strict-markers",
         "--import-mode=importlib",
         "--junitxml=test-report.junit.xml",
-        "--cov=skills/sonar-manage-findings/scripts",
+        "--cov",
         "--cov-branch",
         "--cov-report=term-missing:skip-covered",
         "--cov-report=xml:coverage/python.xml",
@@ -351,8 +351,8 @@
 
 [tool.coverage.run]
     branch         = true
+    include        = [ "skills/sonar-manage-findings/scripts/*.py" ]
     relative_files = true
-    source         = [ "skills/sonar-manage-findings/scripts" ]
 
 [tool.coverage.report]
     fail_under   = 75
